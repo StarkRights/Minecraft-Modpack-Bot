@@ -1,0 +1,30 @@
+{
+  "name": "modpackindex-bot",
+  "version": "1.0.0",
+  "description": "Discord bot for browsing modpack info",
+  "main": "index.js",
+  "scripts": {
+    "build": "babel src -d build",
+    "run": "node build/index.js",
+    "start": "babel src -d build && npm run run",
+    "clean": "rm -rf `find build -mindepth 1 | grep -v 'getkeep$'`",
+    "test": "npm run clean && npm run build && mocha build/tests/*.js"
+  },
+  "dependencies": {
+    "@babel/cli": "^7.10.3",
+    "@babel/core": "^7.10.3",
+    "@babel/plugin-transform-runtime": "^7.10.3",
+    "@babel/preset-env": "^7.10.3",
+    "@babel/register": "^7.10.3",
+    "@babel/runtime": "^7.10.3",
+    "bufferutil": "^4.0.1",
+    "dblapi.js": "^2.4.0",
+    "discord.js": "^12.2.0",
+    "fuse.js": "^6.4.0",
+    "node-cache": "^5.1.2",
+    "node-fetch": "^2.6.0",
+    "winston": "^3.3.3"
+  },
+  "author": "Starkrights",
+  "license": "ISC"
+}
