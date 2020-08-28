@@ -13,5 +13,9 @@ modules.exports = {
       console.log(pageNumber);
       return modsCache;
     }
+
+    cacheArrayifier(cache){
+
+    }
   }
 }
