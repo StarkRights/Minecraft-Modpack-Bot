@@ -77,7 +77,7 @@ module.exports = {
       .setFooter('Powered by modpackindex.com');
     for(let i = 0; i <= 9; i++){
       if(i == finalSearchSet.length){break;}
-      searchResultsEmbed.addField(`${i+1}) ${finalSearchSet[i].item.name}`, finalSearchSets[i].item.summary);
+      searchResultsEmbed.addField(`${i+1}) ${finalSearchSet[i].item.name}`, finalSearchSet[i].item.summary);
     }
     message.channel.send(searchResultsEmbed);
   }
