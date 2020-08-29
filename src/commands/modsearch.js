@@ -1,6 +1,8 @@
 import {message, MessageEmbed} from 'discord.js'
 import MPI from '../utils/ModPackIndexAPI.js'
 const modpackIndexAPI = new MPI;
+import Utils from '../utils/MPBotUtils.js'
+const utils = new Utils;
 import NodeCache from 'node-cache'
 import Fuse from 'fuse.js'
 
@@ -17,58 +19,72 @@ module.exports = {
       message.channel.send('No search paramaters given. \`Usage: mp!modsearch <search term> Ex: mp!modsearch revelations\`')
       return;
     }
-    //i think this should be done in MPIAPI, return modsCache as value for getMods
-    // modsCache = modpackIndexAPI.getMods()
-    const pageSize = 100;
-    const lastPage = await modpackIndexAPI.getMods(pageSize, 1);
-    console.log('lastPage= ', lastPage.meta.last_page);
-    //pageNumber <= await lastPage.meta.last_page ---this is 2nd func
-    for(let pageNumber = 1; pageNumber <= await lastPage.meta.last_page; pageNumber++){
-      let modsObject = await modpackIndexAPI.getMods(pageSize, pageNumber);
-      modsCache.set(pageNumber, modsObject);
-      console.log(pageNumber);
-    }
+                /*
+                    //i think this should be done in MPIAPI, return modsCache as value for getMods
+                    // modsCache = modpackIndexAPI.getMods()
+                    const pageSize = 100;
+                    const lastPage = await modpackIndexAPI.getMods(pageSize, 1);
+                    console.log('lastPage= ', lastPage.meta.last_page);
+                    //pageNumber <= await lastPage.meta.last_page ---this is 2nd func
+                    for(let pageNumber = 1; pageNumber <= await lastPage.meta.last_page; pageNumber++){
+                      let modsObject = await modpackIndexAPI.getMods(pageSize, pageNumber);
+                      modsCache.set(pageNumber, modsObject);
+                      console.log(pageNumber);
+                    }
+                */
+    const modsCache = await utils.getModsCache(100);
+    const modsArray = await utils.cacheArrayifier(modsCache);
+                /*
+                    //This generates a singular object, with a fuckton of keyvalue pairs in the format {modName: modId}. object.keys will be called to search thru.
+                    let modsArray = new Array();
+                    console.log('modsArray = ', modsArray);
+                    //for every page...
+                    const cacheKeys = modsCache.keys();
+                    console.log('cacheKeys= ', cacheKeys);
 
-
-    //This generates a singular object, with a fuckton of keyvalue pairs in the format {modName: modId}. object.keys will be called to search thru.
-    let modsArray = new Array();
-    console.log('modsArray = ', modsArray);
-    //for every page...
-    const cacheKeys = modsCache.keys();
-    console.log('cacheKeys= ', cacheKeys);
-
-    for(let i = 1; (i-1) < cacheKeys.length; i++){
-      let pageNumber = i;
-      let nextObject = await modsCache.get(pageNumber);
-      modsArray = modsArray.concat(Array.from(nextObject.data));
-    }
-    console.log('modsArray', modsArray);
-
+                    for(let i = 1; (i-1) < cacheKeys.length; i++){
+                      let pageNumber = i;
+                      let nextObject = await modsCache.get(pageNumber);
+                      modsArray = modsArray.concat(Array.from(nextObject.data));
+                    }
+                    console.log('modsArray', modsArray);
+                */
 
 
     const searchOptions = {
       includeScore: true,
       keys: ['name'],
-      limit: 30
+      limit: 30,
+      ignoreLocation: true,
+      threshold: 0
     }
     const fuse = new Fuse(modsArray, searchOptions);
     //create array w/ all ordered by result
     let searchResult = await fuse.search(args);
-    console.log('Fuse Search Result: ', searchResult);
-    //sort by popularity rank
-    let finalSearchSet = new Array();
-    for(let i = 0; i <= 14; i++){
-      finalSearchSet[i] = searchResult[i];
-    }
+    console.log('searchResult: ', searchResult);
+    console.log('Length', searchResult.length);
+                                            /*
+                                                //pare down
+                                                let finalSearchSet = new Array();
+                                                for(let i = 0; i <= 14; i++){
+                                                  finalSearchSet[i] = searchResult[i];
+                                                }
+                                            */
+    //sort by rank
     try{
-      finalSearchSet.sort(function(a, b){
+      searchResult.sort(function(a, b){
         return a.item.popularity_rank-b.item.popularity_rank;
       })
     }
     catch(e){
       log.error(`modsearchCommand#sortingError -> ${e}`);
     }
-    console.log('Sorted Search Result; ', finalSearchSet)
+    console.log('Sorted Search Result; ', searchResult)
+    //pare down
+    let finalSearchSet = new Array();
+    for(let i = 0; i <= 14; i++){
+      finalSearchSet[i] = searchResult[i];
+    }
 
     const searchResultsEmbed = new MessageEmbed()
       .setColor('#0099ff')
