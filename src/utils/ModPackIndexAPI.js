@@ -8,13 +8,13 @@ export default class ModPackIndex {
   }
 
   /**
-   * async getModpacks - Calls MPI API to get list of all modpacks
+   * async getPacks - Calls MPI API to get list of all modpacks
    *
    * @param  {number} limit Max number of modpacks to return
    * @param  {number} page  Page of entries to return
    * @return {object}       JSON Object of modpacks
    */
-  async getModpacks(limit, page){
+  async getPacks(limit, page){
     try {
       const response = await fetch(this.baseURL + `modpacks?limit=${limit}&page=${page}`);
       return response.json();

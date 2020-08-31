@@ -1,5 +1,5 @@
 export default
 {
-  'prefix':'mp!'
+  'prefix':'mp!',
   'token':'<token here>'
  }
