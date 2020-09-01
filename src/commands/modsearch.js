@@ -74,10 +74,11 @@ module.exports = {
         const selection = Number(collectedMessage.content);
         const selectedMod = searchResult[selection];
         console.log(`smod.item.authors ${selectedMod.item.authors}`);
-        /*
-        for(let i = 1; i <= selectedMod.item.authors.length; i++){
-          if(i=1){ authors = authors + `${selectedMod.item.authors[i]}`}
-          else{authors = authors + `, ${selectedMOd.item.authors[i]}`}
+        let authors = ' ';
+        for(let i = 0; (i + 1) <= selectedMod.item.authors.length; i++){
+          //Here lies stark's sanity - killed by using = instead of === like a fucking idiot
+          if(i===0){ authors = authors + `${selectedMod.item.authors[i].name}`}
+          else{authors = authors + `, ${selectedMod.item.authors[i].name}`}
         }
 
         const modEmbed = new MessageEmbed()
@@ -90,7 +91,6 @@ module.exports = {
           .addField(`Last modified:`, selectedMod.item.last_modified, true)
           .addField(`Last updated:`, selectedMod.item.last_updated, true);
         message.channel.send(modEmbed);
-        */
       });
   }
 }
