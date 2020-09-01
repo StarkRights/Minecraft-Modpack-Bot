@@ -36,8 +36,6 @@ module.exports = {
     }
     const fuse = new Fuse(modsArray, searchOptions);
     let searchResult = await fuse.search(args);
-    console.log('searchResult: ', searchResult);
-    console.log('Length', searchResult.length);
 
     //sort matches by ModPackIndex ranking
     try{
@@ -46,14 +44,12 @@ module.exports = {
     catch(e){
       log.error(`modsearchCommand#sortingError -> ${e}`);
     }
-    console.log('Sorted Search Result; ', searchResult)
 
     //Take top 15 results, ship them off to discord.
     let finalSearchSet = new Array();
     for(let i = 0; (i+1) <= searchResult.length; i++){
       finalSearchSet[i] = searchResult[i];
     }
-    console.log('final Search Set: ', finalSearchSet);
       const searchResultsEmbed = new MessageEmbed()
         .setColor('#0099ff')
         .setTitle(`Search Results For \'${args}\'`)
@@ -67,13 +63,9 @@ module.exports = {
 
       const filter = m => (m.author.id === message.author.id);
       const collector = message.channel.createMessageCollector(filter, {max: 1, maxMatches: 1, time: 10000});
-      console.log(`searchResult[1]: ${searchResult[1]}`);
-      console.log(`sr1.item.authors: ${searchResult[1].item.authors}`);
-      console.log(`Collector Created`);
       collector.on('collect', collectedMessage => {
         const selection = Number(collectedMessage.content);
         const selectedMod = searchResult[selection];
-        console.log(`smod.item.authors ${selectedMod.item.authors}`);
         let authors = ' ';
         for(let i = 0; (i + 1) <= selectedMod.item.authors.length; i++){
           //Here lies stark's sanity - killed by using = instead of === like a fucking idiot
