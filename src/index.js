@@ -37,4 +37,7 @@ client.on('message', async (message) => {
 	}
 });
 
-client.login(token);
+client.login(token)
+	.catch(e =>{
+		log.error(`Client#LoginFailure -> ${e}`);
+	});

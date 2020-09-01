@@ -67,15 +67,19 @@ module.exports = {
 
       const filter = m => (m.author.id === message.author.id);
       const collector = message.channel.createMessageCollector(filter, {max: 1, maxMatches: 1, time: 10000});
-      console.log(`Collector Created`)
+      console.log(`searchResult[1]: ${searchResult[1]}`);
+      console.log(`sr1.item.authors: ${searchResult[1].item.authors}`);
+      console.log(`Collector Created`);
       collector.on('collect', collectedMessage => {
         const selection = Number(collectedMessage.content);
         const selectedMod = searchResult[selection];
-        let authors = '';
+        console.log(`smod.item.authors ${selectedMod.item.authors}`);
+        /*
         for(let i = 1; i <= selectedMod.item.authors.length; i++){
           if(i=1){ authors = authors + `${selectedMod.item.authors[i]}`}
           else{authors = authors + `, ${selectedMOd.item.authors[i]}`}
         }
+
         const modEmbed = new MessageEmbed()
           .setColor('#0099ff')
           .setTitle(selectedMod.item.name)
@@ -86,6 +90,7 @@ module.exports = {
           .addField(`Last modified:`, selectedMod.item.last_modified, true)
           .addField(`Last updated:`, selectedMod.item.last_updated, true);
         message.channel.send(modEmbed);
+        */
       });
   }
 }

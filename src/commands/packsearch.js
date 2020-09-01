@@ -64,6 +64,6 @@ module.exports = {
       searchResultsEmbed.addField(`${i+1}) ${finalSearchSet[i].item.name}`, finalSearchSet[i].item.summary);
     }
     message.channel.send(searchResultsEmbed);
-    
+
   }
 }
