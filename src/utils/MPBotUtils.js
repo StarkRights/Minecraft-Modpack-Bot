@@ -1,5 +1,6 @@
 import log from '../log'
 import fs from 'fs'
+import cliProgress from 'cli-progress'
 import * as util from 'util'
 import NodeCache from "node-cache";
 const modsCache = new NodeCache({stdTTL:60*60*1, deleteOnExpire:false});
@@ -42,11 +43,15 @@ export default class Utils {
       lastPage = lastPage.meta.last_page;
       log.info('MPBotUtils#getModsCache -> Last API Request Page: ', lastPage);
       //add each individual page response to cache
+      const bar1 = new cliProgress.SingleBar({}, cliProgress.Presets.shades_classic);
+      bar1.start(lastPage, 0);
       for(let pageNumber = 1; pageNumber <= lastPage; pageNumber++){
         let modsObject = await modpackIndexAPI.getMods(pageSize, pageNumber);
         modsCache.set(pageNumber, modsObject);
-        log.info(`MPBotUtils#getModsCache -> Requested page ${pageNumber}` );
+        bar1.increment();
+
       }
+      bar1.stop();
       //Info Logging - If the cache is not expected size, log error
       if (modsCache.getStats().keys != lastPage){
         log.error('MPBotUtils#getModsCache -> API Caching Failed.')
