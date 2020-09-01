@@ -64,6 +64,32 @@ module.exports = {
       searchResultsEmbed.addField(`${i+1}) ${finalSearchSet[i].item.name}`, finalSearchSet[i].item.summary);
     }
     message.channel.send(searchResultsEmbed);
+    const filter = m => (m.author.id === message.author.id);
+    const collector = message.channel.createMessageCollector(filter, {max: 1, maxMatches: 1, time: 10000});
+    console.log(`searchResult[1]: ${searchResult[1]}`);
+    console.log(`sr1.item.authors: ${searchResult[1].item.authors}`);
+    console.log(`Collector Created`);
+    collector.on('collect', collectedMessage => {
+      const selection = Number(collectedMessage.content);
+      const selectedPack = searchResult[selection];
+      console.log(`smod.item.authors ${selectedPack.item.authors}`);
+      let authors = ' ';
+      for(let i = 0; (i + 1) <= selectedPack.item.authors.length; i++){
+        //Here lies stark's sanity - killed by using = instead of === like a fucking idiot
+        if(i===0){ authors = authors + `${selectedPack.item.authors[i].name}`}
+        else{authors = authors + `, ${selectedPack.item.authors[i].name}`}
+      }
 
+      const modEmbed = new MessageEmbed()
+        .setColor('#0099ff')
+        .setTitle(selectedPack.item.name)
+        .setThumbnail(selectedPack.item.thumbnail_url)
+        .addField(`Description:`, selectedPack.item.summary)
+        .addField(`Authors:`, authors, true)
+        .addField(`Downloads:`, selectedPack.item.download_count, true)
+        .addField(`Last modified:`, selectedPack.item.last_modified, true)
+        .addField(`Last updated:`, selectedPack.item.last_updated, true);
+      message.channel.send(modEmbed);
+    });
   }
 }
