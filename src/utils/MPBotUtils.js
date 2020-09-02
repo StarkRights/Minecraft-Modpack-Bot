@@ -59,7 +59,7 @@ export default class Utils {
     }
     return modsCache;
   }
-
+  
   async getPacksCache(pageSize){
     try{
       console.log(`pcgetstats-> ${packsCache.getStats().keys}`);

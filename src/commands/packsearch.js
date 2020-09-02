@@ -81,7 +81,8 @@ module.exports = {
         .addField(`Authors:`, authors, true)
         .addField(`Downloads:`, selectedPack.item.download_count, true)
         .addField(`Last modified:`, selectedPack.item.last_modified, true)
-        .addField(`Last updated:`, selectedPack.item.last_updated, true);
+        .addField(`Last updated:`, selectedPack.item.last_updated, true)
+        .setFooter('Powered by ModPackIndex.com');
       message.channel.send(modEmbed);
     });
   }
