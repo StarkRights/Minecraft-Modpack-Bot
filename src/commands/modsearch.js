@@ -1,4 +1,4 @@
-import {message, MessageEmbed} from 'discord.js'
+import {message, MessageEmbed, ReactionCollector} from 'discord.js'
 import log from '../log'
 import MPI from '../utils/ModPackIndexAPI.js'
 const modpackIndexAPI = new MPI;
@@ -23,6 +23,12 @@ module.exports = {
     }
 
     //Retrieve mod data from API request cache.
+    utils.on('cacheing', () => {
+      message.channel.send('Wow, that\'s some crazy timing. You made a request just as the cache expired! This search will take ~1-2 minutes while the cache re-populates, then everything should be back to normal! ');
+    })
+    .on('incomplete', () => {
+      message.channel.send('The mods cache is incomplete after cacheing. Either ModPackIndex\'s API went down in the middle of cacheing, or something is seriously wrong. If you\'re seeing this, try again, and if you get the same response, screenshot and send to Starkrights#1463 immediately');
+    });
     const modsCache = await utils.getModsCache(100);
     const modsArray = await utils.cacheArrayifier(modsCache);
 
@@ -32,10 +38,11 @@ module.exports = {
       keys: ['name'],
       limit: 30,
       ignoreLocation: true,
-      threshold: .1
+      threshold: 0
     }
     const fuse = new Fuse(modsArray, searchOptions);
     let searchResult = await fuse.search(args);
+    log.info(`Searchresultlength = ${searchResult.length}`);
 
     //sort matches by ModPackIndex ranking
     try{
@@ -50,40 +57,79 @@ module.exports = {
     for(let i = 0; (i+1) <= searchResult.length; i++){
       finalSearchSet[i] = searchResult[i];
     }
-      const searchResultsEmbed = new MessageEmbed()
-        .setColor('#0099ff')
-        .setTitle(`Search Results For \'${args}\'`)
-     	  .setTimestamp()
-        .setFooter('Powered by modpackindex.com');
-      for(let i = 0; i <= 9; i++){
-        if(i == finalSearchSet.length){break;}
-        searchResultsEmbed.addField(`${i+1}) ${finalSearchSet[i].item.name}`, finalSearchSet[i].item.summary);
-      }
-      message.channel.send(searchResultsEmbed);
+    let menuPage = 0;
+    const searchResultsEmbed = new MessageEmbed()
+      .setColor('#0099ff')
+      .setTitle(`Search Results For \'${args}\' | Page ${menuPage + 1}`)
+   	  .setTimestamp()
+      .setFooter('Powered by modpackindex.com');
+    for(let i = 0; i <= 9; i++){
+      if(i == finalSearchSet.length){break;}
+      searchResultsEmbed.addField(`${i+1}) ${finalSearchSet[i].item.name} | ID: ${finalSearchSet[i].item.id}`, finalSearchSet[i].item.summary);
+    }
+    //No paging if search result is < 10 results
+    if(finalSearchSet.length > 10)  {
+      const searchEmbedMessage = await message.channel.send(searchResultsEmbed);
+      searchEmbedMessage.react('◀️');
+      searchEmbedMessage.react('▶️');
+      //filter non-requester reactions, and non-arrow reactions
+      const reactionFilter = (reaction, user) => {
+        return ((reaction.emoji.name == '▶️') || (reaction.emoji.name == '◀️')) && (user.id === message.author.id);
+      };
+      const reactionCollector = new ReactionCollector(searchEmbedMessage, reactionFilter, {time: 30000});
 
-      const filter = m => (m.author.id === message.author.id);
-      const collector = message.channel.createMessageCollector(filter, {max: 1, maxMatches: 1, time: 10000});
-      collector.on('collect', collectedMessage => {
-        const selection = Number(collectedMessage.content);
-        const selectedMod = searchResult[selection];
-        let authors = ' ';
-        for(let i = 0; (i + 1) <= selectedMod.item.authors.length; i++){
-          //Here lies stark's sanity - killed by using = instead of === like a fucking idiot
-          if(i===0){ authors = authors + `${selectedMod.item.authors[i].name}`}
-          else{authors = authors + `, ${selectedMod.item.authors[i].name}`}
+      reactionCollector.on('collect', collectedReaction => {
+        collectedReaction.remove();
+        searchEmbedMessage.react(collectedReaction.emoji.name);
+        //increment menuPage based on reaction
+        if(collectedReaction.emoji.name == '▶️'){menuPage = menuPage + 1;}
+        else if(collectedReaction.emoji.name == '◀️'){menuPage = menuPage - 1;}
+        else{log.error(`ModSearch#MenuPagingError -> Collected Reaction != Left or Right Arrow`);}
+        //menuPage can only go as low as 0.
+        if(menuPage < 0){menuPage = 0;}
+        //delete all old fields
+        searchResultsEmbed.spliceFields(0, 10);
+        //iterate 10 new fields in
+        for(let i = 0; i <= 9; i++){
+          //break if we reach the end of search results
+          if((menuPage*10 + i) == finalSearchSet.length){break;}
+                                      //add 10*menupage to the index.
+          searchResultsEmbed.addField(`${(10*(menuPage))+(i+1)}) ${finalSearchSet[(10*menuPage)+i].item.name}`, finalSearchSet[(10*menuPage)+i].item.summary);
         }
-
-        const modEmbed = new MessageEmbed()
-          .setColor('#0099ff')
-          .setTitle(selectedMod.item.name)
-          .setThumbnail(selectedMod.item.thumbnail_url)
-          .addField(`Description:`, selectedMod.item.summary)
-          .addField(`Authors:`, authors, true)
-          .addField(`Downloads:`, selectedMod.item.download_count, true)
-          .addField(`Last modified:`, selectedMod.item.last_modified, true)
-          .addField(`Last updated:`, selectedMod.item.last_updated, true)
-          .setFooter('Powered by ModPackIndex.com');
-        message.channel.send(modEmbed);
+        searchResultsEmbed.setTitle(`Search Results For \'${args}\' | Page ${menuPage + 1}`);
+        //edit message with edited embed.
+        searchEmbedMessage.edit(searchResultsEmbed);
       });
+    }
+
+
+
+
+    const messageFilter = m => ((m.author.id === message.author.id) && (!isNaN(Number(m.content))) );
+
+    //10 second expiration won't work if a user wants to go thru multiple pages. Figure out how to reset the time?
+    const collector = message.channel.createMessageCollector(messageFilter, {max: 1, maxMatches: 1, time: 10000});
+    collector.on('collect', collectedMessage => {
+      const selection = Number(collectedMessage.content);
+      const selectedMod = searchResult[selection];
+      let authors = ' ';
+      for(let i = 0; (i + 1) <= selectedMod.item.authors.length; i++){
+        //Here lies stark's sanity - killed by using = instead of === like a fucking idiot
+        if(i===0){ authors = authors + `${selectedMod.item.authors[i].name}`}
+        else{authors = authors + `, ${selectedMod.item.authors[i].name}`}
+      }
+
+      const modEmbed = new MessageEmbed()
+        .setColor('#0099ff')
+        .setTitle(selectedMod.item.name)
+        .setThumbnail(selectedMod.item.thumbnail_url)
+        .addField(`Description:`, selectedMod.item.summary)
+        .addField(`Authors:`, authors, true)
+        .addField(`Downloads:`, selectedMod.item.download_count, true)
+        .addField(`Last modified:`, selectedMod.item.last_modified, true)
+        .addField(`Last updated:`, selectedMod.item.last_updated, true)
+        .setFooter('Powered by ModPackIndex.com');
+      message.channel.send(modEmbed);
+    });
   }
 }

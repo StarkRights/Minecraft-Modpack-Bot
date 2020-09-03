@@ -38,6 +38,7 @@ export default class Utils {
   async getModsCache(pageSize){
     //If cache is expired - generate new cache.
     if((modsCache.getStats().keys == 0)){
+      this.emit('cacheing');
       log.info('MPBotUtils#getModsCache -> Quering API for new cache');
       let lastPage = await modpackIndexAPI.getMods(pageSize, 1);
       lastPage = lastPage.meta.last_page;
@@ -54,12 +55,13 @@ export default class Utils {
       bar1.stop();
       //Info Logging - If the cache is not expected size, log error
       if (modsCache.getStats().keys != lastPage){
-        log.error('MPBotUtils#getModsCache -> API Caching Failed.')
+        this.emit('incomplete');
+        log.error('MPBotUtils#getModsCache -> API Caching Failed.');
       }
     }
     return modsCache;
   }
-  
+
   async getPacksCache(pageSize){
     try{
       console.log(`pcgetstats-> ${packsCache.getStats().keys}`);
