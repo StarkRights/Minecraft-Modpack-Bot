@@ -38,13 +38,15 @@ export default class Utils {
   async getModsCache(pageSize){
     //If cache is expired - generate new cache.
     if((modsCache.getStats().keys == 0)){
-      this.emit('cacheing');
       log.info('MPBotUtils#getModsCache -> Quering API for new cache');
       let lastPage = await modpackIndexAPI.getMods(pageSize, 1);
       lastPage = lastPage.meta.last_page;
       log.info('MPBotUtils#getModsCache -> Last API Request Page: ', lastPage);
       //add each individual page response to cache
-      const bar1 = new cliProgress.SingleBar({}, cliProgress.Presets.shades_classic);
+      const bar1 = new cliProgress.SingleBar({
+        format: 'Mod Cacheing Progress |' + ('{bar}') + '| {percentage}% || {value}/{total} Mods || Eta: {eta}s',
+        barCompleteChar: '\u2588',
+      });
       bar1.start(lastPage, 0);
       for(let pageNumber = 1; pageNumber <= lastPage; pageNumber++){
         let modsObject = await modpackIndexAPI.getMods(pageSize, pageNumber);
@@ -55,7 +57,6 @@ export default class Utils {
       bar1.stop();
       //Info Logging - If the cache is not expected size, log error
       if (modsCache.getStats().keys != lastPage){
-        this.emit('incomplete');
         log.error('MPBotUtils#getModsCache -> API Caching Failed.');
       }
     }
@@ -69,12 +70,17 @@ export default class Utils {
         if(packsCache.getStats().keys == 0){
         let lastPage = await modpackIndexAPI.getPacks(pageSize, 1);
         lastPage = lastPage.meta.last_page;
-        console.log('lastpage= ', lastPage);
+        const bar2 = new cliProgress.SingleBar({
+          format: 'Modpack Cacheing Progress |' + ('{bar}') + '| {percentage}% || {value}/{total} Modpacks || Eta: {eta}s',
+          barCompleteChar: '\u2588',
+        });
+        bar2.start(lastPage, 0);
         for (let pageNumber = 1; pageNumber <= lastPage; pageNumber++){
           let packsObject = await modpackIndexAPI.getPacks(pageSize, pageNumber);
           packsCache.set(pageNumber, packsObject);
-          console.log(pageNumber);
+          bar2.increment();
         }
+        bar2.stop();
       }
     } catch(e) {
       log.error(`WhateverThe Fuck ThE Error Is-> ${e}`);

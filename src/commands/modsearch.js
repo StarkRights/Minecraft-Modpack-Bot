@@ -23,12 +23,6 @@ module.exports = {
     }
 
     //Retrieve mod data from API request cache.
-    utils.on('cacheing', () => {
-      message.channel.send('Wow, that\'s some crazy timing. You made a request just as the cache expired! This search will take ~1-2 minutes while the cache re-populates, then everything should be back to normal! ');
-    })
-    .on('incomplete', () => {
-      message.channel.send('The mods cache is incomplete after cacheing. Either ModPackIndex\'s API went down in the middle of cacheing, or something is seriously wrong. If you\'re seeing this, try again, and if you get the same response, screenshot and send to Starkrights#1463 immediately');
-    });
     const modsCache = await utils.getModsCache(100);
     const modsArray = await utils.cacheArrayifier(modsCache);
 
@@ -65,11 +59,13 @@ module.exports = {
       .setFooter('Powered by modpackindex.com');
     for(let i = 0; i <= 9; i++){
       if(i == finalSearchSet.length){break;}
-      searchResultsEmbed.addField(`${i+1}) ${finalSearchSet[i].item.name} | ID: ${finalSearchSet[i].item.id}`, finalSearchSet[i].item.summary);
+      console.log(`finalSearchSet[i].item.name: ${finalSearchSet[i].item.name}`);
+      searchResultsEmbed.addField(`${i+1}) ${finalSearchSet[i].item.name} | \`ID: ${finalSearchSet[i].item.id}\``, finalSearchSet[i].item.summary);
     }
+    //here, once again, lies stark's sanity. This line was placed in the If statement. Obvious issues arise with <10 search results
+    const searchEmbedMessage = await message.channel.send(searchResultsEmbed);
     //No paging if search result is < 10 results
     if(finalSearchSet.length > 10)  {
-      const searchEmbedMessage = await message.channel.send(searchResultsEmbed);
       searchEmbedMessage.react('◀️');
       searchEmbedMessage.react('▶️');
       //filter non-requester reactions, and non-arrow reactions
@@ -94,7 +90,10 @@ module.exports = {
           //break if we reach the end of search results
           if((menuPage*10 + i) == finalSearchSet.length){break;}
                                       //add 10*menupage to the index.
-          searchResultsEmbed.addField(`${(10*(menuPage))+(i+1)}) ${finalSearchSet[(10*menuPage)+i].item.name}`, finalSearchSet[(10*menuPage)+i].item.summary);
+          let modNumber = (menuPage*10) + i;
+          let modObj = finalSearchSet[modNumber].item;
+
+          searchResultsEmbed.addField(`${modNumber}) ${modObj.name} | \`ID: ${modObj.id}\``, modObj.summary);
         }
         searchResultsEmbed.setTitle(`Search Results For \'${args}\' | Page ${menuPage + 1}`);
         //edit message with edited embed.
