@@ -1,12 +1,9 @@
 import "regenerator-runtime/runtime.js";
 import {readdirSync, readFile} from 'fs'
 import {Client, Collection} from 'discord.js'
+import config from './config.js'
 import log from './log'
 import {join} from 'path'
-
-const config = readFile('./config', 'utf8', (err, data) =>{
-	if(err){log.error(`index#configReadError -> ${err}`)}
-});
 
 const token = config.token;
 const prefix = config.prefix;

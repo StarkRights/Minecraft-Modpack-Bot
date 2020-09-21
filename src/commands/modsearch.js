@@ -6,6 +6,8 @@ import Utils from '../utils/MPBotUtils.js'
 const utils = new Utils;
 import NodeCache from 'node-cache'
 import Fuse from 'fuse.js'
+import MongoDB from '../utils/MongoDB.js'
+const guildsCollection = new MongoDB('Guilds');
 
 const modsCache = new NodeCache();
 
@@ -26,21 +28,26 @@ module.exports = {
     const modsCache = await utils.getModsCache(100);
     const modsArray = await utils.cacheArrayifier(modsCache);
 
+    const guild = message.guild.id;
+    const query = 'threshold';
+    const threshold = guildsCollection.readDocument(guild, query);
     //initialize fuze object: Search name of mods for the exact search phrase anywhere in the title.
     const searchOptions = {
       includeScore: true,
       keys: ['name'],
       limit: 30,
       ignoreLocation: true,
-      threshold: 0
+      threshold: threshold
     }
+    log.info(`Threshold: ${threshold}`);
+
     const fuse = new Fuse(modsArray, searchOptions);
     let searchResult = await fuse.search(args);
     log.info(`Searchresultlength = ${searchResult.length}`);
 
     //sort matches by ModPackIndex ranking
     try{
-      searchResult.sort(function(a, b){return a.item.popularity_rank-b.item.popularity_rank;})
+      searchResult.sort(function(a, b){return a.item.popularity_rank-b.item.popularity_rank;});
     }
     catch(e){
       log.error(`modsearchCommand#sortingError -> ${e}`);
