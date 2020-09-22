@@ -1,18 +1,18 @@
 import config from '../config.js'
-import {DBClient} from 'mongodb'
 
+import {MongoClient} from 'mongodb'
 const dbURL = config.mongo.dbURL;
 const dbName = config.mongo.dbName;
-const client = new DBClient(dbURL, dbName);
-client.initialize();
 
-//Database is bot wide. A class will be instantiated per collection.
-// If you have to access multiple collections, use two class instances. (ex, GuildCollection.updatedocument, & StatsCollection.updateDocument)
-export default class MongoWrapper {
+const client = new MongoClient(dbURL, dbName);
+try{
+  client.connect();
+} catch(e){
+  log.error(`MongoUtils#connectFailure -> ${e}`);
+}
+export default class MongoUtil {
   constructor(collection){
-    //the DBClient object, after initialized, returns a property, database
-    this.client = client.database;
-    this.collection = client(collection);
+    this.collection = collection;
   }
 
   async insertDocument(){

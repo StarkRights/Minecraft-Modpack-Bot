@@ -6,8 +6,8 @@ import Utils from '../utils/MPBotUtils.js'
 const utils = new Utils;
 import NodeCache from 'node-cache'
 import Fuse from 'fuse.js'
-import MongoDB from '../utils/MongoDB.js'
-const guildsCollection = new MongoDB('Guilds');
+import MongoWrapper from '../utils/MongoUtils'
+const guildsCollection = new MongoWrapper('Guilds');
 
 const modsCache = new NodeCache();
 

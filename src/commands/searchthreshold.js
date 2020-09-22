@@ -1,7 +1,7 @@
 import {message, MessageEmbed} from 'discord.js'
 import log from '../log'
-import MongoDB from '../utils/MongoDb'
-const guildsCollection = new MongoDB('Guilds');
+import MongoUtil from '../utils/MongoUtils'
+const guildsCollection = new MongoUtil('Guilds');
 
 module.exports = {
   name: "searchthreshold",
