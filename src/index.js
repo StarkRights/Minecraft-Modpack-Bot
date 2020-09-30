@@ -4,6 +4,10 @@ import {Client, Collection} from 'discord.js'
 import config from './config.js'
 import log from './log'
 import {join} from 'path'
+import MongoUtil from './utils/MongoUtils'
+
+const mongoUtil = new MongoUtil('Guilds');
+mongoUtil.initialize();
 
 const token = config.token;
 const prefix = config.prefix;
@@ -26,7 +30,7 @@ client.on('message', async (message) => {
 	//better way to do this, 100% no doubt, but I'm lazy asf so stfu future stark.
 	const commandArray = await message.content.slice(prefix.length).split(/ +/);
 	const command = await commandArray.shift().toLowerCase();
-	const args = await message.content.replace(prefix+command, '');
+	const args = await message.content.replace(prefix+command+' ', '');
 
 	try {
 		await client.commands.get(command).execute(message, args);
