@@ -40,6 +40,11 @@ client.on('message', async (message) => {
 	}
 });
 
+client.on('guildCreate', async (guild) =>{
+	//create new document in database for default parameters.
+
+});
+
 client.login(token)
 	.catch(e =>{
 		log.error(`Client#LoginFailure -> ${e}`);

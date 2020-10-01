@@ -30,7 +30,7 @@ module.exports = {
 
     const guild = message.guild.id;
     const query = 'threshold';
-    const threshold = guildsCollection.readDocument(guild, query);
+    const threshold = await guildsCollection.readDocument(guild, query);
     //initialize fuze object: Search name of mods for the exact search phrase anywhere in the title.
     const searchOptions = {
       includeScore: true,

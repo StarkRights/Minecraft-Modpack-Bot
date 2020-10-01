@@ -33,8 +33,6 @@ export default class ModPackIndex {
   async getModpack(modpackId){
     try{
       const response = await fetch(this.baseURL + `modpack/${modpackId}`);
-      console.log(await response.json());
-      console.log(await resposne.headers.get('X-RateLimit-Remaining'));
       return response.json();
     }
     catch(e){
@@ -50,8 +48,8 @@ export default class ModPackIndex {
    */
   async getModpackMods(modpackId){
     try{
-      const response = await fetch(this.baseURL + `modpack/${modpackId}/mod`);
-      console.log(await response.json());
+      const response = await fetch(this.baseURL + `modpack/${modpackId}/mods`);
+      //console.log(await response.json());
       return response.json();
     }
     catch(e){
@@ -90,7 +88,7 @@ export default class ModPackIndex {
   async getMod(modId){
     try{
       const response = await fetch(this.baseURL + `mod/${modId}`);
-      console.log(await response.json());
+      //console.log(await response.json());
       return response.json();
     }
     catch(e){
@@ -108,8 +106,8 @@ export default class ModPackIndex {
    */
   async getModpacksWithMod(modId, limit, page){
     try{
-      const response = await fetch(this.baseURL + `mod/${modId}/modpakcs?limit=${limit}&page=${page}`);
-      console.log(await response.json());
+      const response = await fetch(this.baseURL + `mod/${modId}/modpacks?limit=${limit}&page=${page}`);
+      //console.log(await response.json());
       return response.json();
     }
     catch(e){

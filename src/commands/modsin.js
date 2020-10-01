@@ -12,72 +12,54 @@ const guildsCollection = new MongoWrapper('Guilds');
 module.exports = {
   //let user pic mod from menu
   //fuzzy search mods
-  name: 'packswith',
-  description: 'displays packs containing a user selected mod',
+  name: 'modsin',
+  description: 'displays mods in a certain pack',
   async execute (message, args){
     if(isNaN(args)){
       message.channel.send('Invalid query/modID. \`Usage: mp!modsearch <modID> ex: mp!modsearch 1634\`');
       return;
     }
-    const resultsEmbed = new MessageEmbed()
-      .setColor('#0099ff')
-      .setTitle(`Querying results`)
-      .setDescription(`This data isn't cached, depending on the modpack size, this could take a minute.`)
-      .setTimestamp()
-      .setFooter('Powered by modpackindex.com');
-    const searchEmbedMessage = await message.channel.send(resultsEmbed);
+    let modsPages = new Array();
 
 
-    let packsPages = new Array();
-    let lastPage = await modpackIndexAPI.getModpacksWithMod(args, 100, 1);
-    lastPage = lastPage.meta.last_page;
-    for (let pageNumber = 1; pageNumber <= lastPage; pageNumber++){
-      let packsObject = await modpackIndexAPI.getModpacksWithMod(args, 100, pageNumber);
-      packsPages[pageNumber-1] = packsObject;
-    }
+    let modsObject = await modpackIndexAPI.getModpackMods(args);
+    let modsArray = new Array();
 
-
-    let packsArray = new Array();
-    let packsKeys = new Array();
-    const packsPagesIterator = packsPages.keys();
-    for(let key of packsPagesIterator){
-      packsKeys[key] = packsArray[key];
-    }
-
-    for(let i = 0; i < packsKeys.length; i++){
-      let pageNumber = i;
-      let nextObject = await packsPages[pageNumber];
-      packsArray = packsArray.concat(Array.from(nextObject.data));
+    for(let i = 0; i < modsObject.data.length; i++){
+      let nextObject = await modsObject.data[i];
+      modsArray[i] = nextObject;
     }
 
     try{
-      packsArray.sort(function(a, b){return a.popularity_rank-b.popularity_rank;});
+      modsArray.sort((a, b)=>
+        a.name.localeCompare(b.name)
+      );
     }
     catch(e){
-      log.error(`packswithCommand#sortingError -> ${e}`);
+      log.error(`modsinCommand#sortingError -> ${e}`);
     }
 
     let menuPage = 0;
 
-    const modObj = await modpackIndexAPI.getMod(args);
-    const modName = modObj.data.name;
 
-    resultsEmbed
+    const modObj = await modpackIndexAPI.getModpack(args)
+    const packName = modObj.data.name
+
+    const resultsEmbed = new MessageEmbed()
       .setColor('#0099ff')
-      .setTitle(`Modpacks Containing \'${modName}\' | Page ${menuPage + 1}`)
-      .setDescription()
+      .setTitle(`Mod list for \'${packName}\' | Page ${menuPage + 1}`)
       .setTimestamp()
       .setFooter('Powered by modpackindex.com');
     for(let i = 0; i <= 9; i++){
-      if(i == packsArray.length){break;}
+      if(i == modsArray.length){break;}
 
-      resultsEmbed.addField(`${i+1}) ${packsArray[i].name} | \`ID: ${packsArray[i].id}\``, packsArray[i].summary);
+      resultsEmbed.addField(`${i+1}) ${modsArray[i].name} | \`ID: ${modsArray[i].id}\``, modsArray[i].summary);
     }
 
-    searchEmbedMessage.edit(resultsEmbed);
+    const searchEmbedMessage = await message.channel.send(resultsEmbed);
 
     //No paging if search result is < 10 results
-    if(packsArray.length > 10)  {
+    if(modsArray.length > 10)  {
       searchEmbedMessage.react('◀️');
       searchEmbedMessage.react('▶️');
       //filter non-requester reactions, and non-arrow reactions
@@ -100,11 +82,10 @@ module.exports = {
         //iterate 10 new fields in
         for(let i = 0; i <= 9; i++){
           //break if we reach the end of search results
-          if((menuPage*10 + i) == packsArray.length){break;}
+          if((menuPage*10 + i) == modsArray.length){break;}
                                       //add 10*menupage to the index.
           let modNumber = (menuPage*10) + i;
-          let modObj = packsArray[modNumber];
-
+          let modObj = modsArray[modNumber];
 
           resultsEmbed.addField(`${modNumber}) ${modObj.name} | \`ID: ${modObj.id}\``, modObj.summary);
         }
