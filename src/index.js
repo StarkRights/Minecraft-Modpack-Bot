@@ -15,7 +15,13 @@ const ownerID = config.ownerID
 const client = new Client();
 client.commands = new Collection();
 
-const owner = client.users.cache.get(ownerID);
+async function ownerInit(){
+	try{
+		const owner = await client.users.fetch(ownerID, false);
+		owner.send(`OwnerObject Initialized!`);
+	} catch(e){ log.error(e);}
+
+}
 
 const commandFiles = readdirSync(join(__dirname, 'commands')).filter(file => file.endsWith('.js'));
 for (const file of commandFiles) {
@@ -25,6 +31,7 @@ for (const file of commandFiles) {
 
 client.once('ready', () => {
 	log.info('Client#Ready -> ready...');
+	ownerInit();
 });
 
 client.on('message', async (message) => {

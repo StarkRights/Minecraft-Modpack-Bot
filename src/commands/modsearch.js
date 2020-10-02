@@ -6,8 +6,8 @@ import Utils from '../utils/MPBotUtils.js'
 const utils = new Utils;
 import NodeCache from 'node-cache'
 import Fuse from 'fuse.js'
-import MongoWrapper from '../utils/MongoUtils'
-const guildsCollection = new MongoWrapper('Guilds');
+import MongoUtil from '../utils/MongoUtils'
+const guildsCollection = new MongoUtil('Guilds');
 
 const modsCache = new NodeCache();
 
@@ -29,17 +29,16 @@ module.exports = {
     const modsArray = await utils.cacheArrayifier(modsCache);
 
     const guild = message.guild.id;
-    const query = 'threshold';
-    const threshold = await guildsCollection.readDocument(guild, query);
+    //const threshold = await guildsCollection.readDocument(guild, 'threshold');
     //initialize fuze object: Search name of mods for the exact search phrase anywhere in the title.
     const searchOptions = {
       includeScore: true,
       keys: ['name'],
       limit: 30,
       ignoreLocation: true,
-      threshold: threshold
+      threshold: .1
     }
-    log.info(`Threshold: ${threshold}`);
+    //log.info(`Threshold: ${threshold}`);
 
     const fuse = new Fuse(modsArray, searchOptions);
     let searchResult = await fuse.search(args);
