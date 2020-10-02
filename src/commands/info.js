@@ -9,7 +9,7 @@ module.exports = {
     const infoEmbed = new MessageEmbed()
       .setColor('#0099ff')
       .setTitle('ModPackIndex Bot Info')
-      .setDescription('This bot is developed and maintained by Starkrights, powered by ModPackIndex.com.')
+      .setDescription('This bot is developed and maintained by \nStarkrights, powered by ModPackIndex.com.')
       .addField('\u200b', '**Info**')
       .addField('Github', 'Currently Private', true)
       .addField('Version', '1.0.0', true)
