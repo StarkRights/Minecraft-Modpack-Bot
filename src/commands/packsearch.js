@@ -17,11 +17,7 @@ module.exports = {
   description:'lists packs based on search query',
   async execute (message, args){
     //Return without search parameters
-<<<<<<< HEAD
-    if(!args){
-=======
     if(!args[0]){
->>>>>>> master
       message.channel.send('No search paramaters given. \`Usage: mp!packsearch <search term> Ex: mp!packsearch revelations\`')
       return;
     }
@@ -45,11 +41,7 @@ module.exports = {
       threshold: .1
     }
     const fuse = new Fuse(packsArray, searchOptions);
-<<<<<<< HEAD
-    let searchResult = await fuse.search(args);
-=======
-    let searchResult = await fuse.search(args[0]);
->>>>>>> master
+    let searchResult = await fuse.search(args.join(' '));
 
     //sort matches by ModPackIndex ranking
     try{
@@ -67,11 +59,7 @@ module.exports = {
     let menuPage = 0;
     const searchResultsEmbed = new MessageEmbed()
       .setColor('#0099ff')
-<<<<<<< HEAD
-      .setTitle(`Search Results For \'${args}\' | Page ${menuPage + 1}`)
-=======
       .setTitle(`Search Results For \'${args[0]}\' | Page ${menuPage + 1}`)
->>>>>>> master
       .setTimestamp()
       .setFooter('Powered by modpackindex.com');
     for(let i = 0; i <= 9; i++){
@@ -121,11 +109,7 @@ module.exports = {
 
             searchResultsEmbed.addField(`${packNumber}) ${packObj.name} | \`ID: ${packObj.id}\``, packObj.summary);
           }
-<<<<<<< HEAD
-          searchResultsEmbed.setTitle(`Search Results For \'${args}\' | Page ${menuPage + 1}`);
-=======
           searchResultsEmbed.setTitle(`Search Results For \'${args[0]}\' | Page ${menuPage + 1}`);
->>>>>>> master
           //edit message with edited embed.
           searchEmbedMessage.edit(searchResultsEmbed);
         });
