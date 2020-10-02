@@ -17,3 +17,6 @@ If you have an idea for a new functionality, or to improve existing functionalit
 ## Thanks
 Infinite thanks to [Headline](https://github.com/Headline) for enduring countless novice questions, watching me struggle, and being my overall impromptu mentor for this project. I couldn't have made this anywhere near what it is without his help.<br>
 Additionally, thanks to Washclof, for providing the absolutely amazing [ModPackIndex API](https://modpackindex.docs.apiary.io/), which this bot is literally built ontop of, when Curse couldn't/wouldn't. This probably wouldn't exist at all if his API wasn't there. 
+
+## Additional credit
+Bot logo sourced from http://pngtree.com (Glyph Round Database Logo)
