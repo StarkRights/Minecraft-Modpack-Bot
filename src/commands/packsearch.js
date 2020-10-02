@@ -41,7 +41,7 @@ module.exports = {
       threshold: .1
     }
     const fuse = new Fuse(packsArray, searchOptions);
-    let searchResult = await fuse.search(args[0]);
+    let searchResult = await fuse.search(args.join(' '));
 
     //sort matches by ModPackIndex ranking
     try{
