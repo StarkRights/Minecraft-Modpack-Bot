@@ -21,13 +21,13 @@ module.exports = {
       message.channel.send('No search paramaters given. \`Usage: mp!packsearch <search term> Ex: mp!packsearch revelations\`')
       return;
     }
-    const resultsEmbed = new MessageEmbed()
+    const loadingEmbed = new MessageEmbed()
       .setColor('#0099ff')
       .setTitle(`Querying results`)
       .setDescription(`This data isn't cached, which probably means you're the first one to run this command since the cache expired. If this happens often, it's more likely that something's broken.`)
       .setTimestamp()
       .setFooter('Powered by modpackindex.com');
-    const searchEmbedMessage = await message.channel.send(resultsEmbed);
+    const searchEmbedMessage = await message.channel.send(loadingEmbed);
     //Retrieve mod data from API request cache.
     const packsCache = await utils.getPacksCache(100);
     const packsArray = await utils.cacheArrayifier(packsCache);
@@ -56,12 +56,18 @@ module.exports = {
     for(let i = 0; (i+1) <= searchResult.length; i++){
       finalSearchSet[i] = searchResult[i];
     }
-
+    let menuPage = 0;
+    const searchResultsEmbed = new MessageEmbed()
+      .setColor('#0099ff')
+      .setTitle(`Search Results For \'${args}\' | Page ${menuPage + 1}`)
+      .setTimestamp()
+      .setFooter('Powered by modpackindex.com');
     for(let i = 0; i <= 9; i++){
       if(i == finalSearchSet.length){break;}
       searchResultsEmbed.addField(`${i+1}) ${finalSearchSet[i].item.name} | \`ID: ${finalSearchSet[i].item.id}\``, finalSearchSet[i].item.summary);
     }
-    searchResultsEmbed.edit(searchResultsEmbed);
+
+    searchEmbedMessage.edit(searchResultsEmbed);
     const filter = m => (m.author.id === message.author.id);
     const collector = message.channel.createMessageCollector(filter, {max: 1, maxMatches: 1, time: 10000});
     collector.on('collect', collectedMessage => {

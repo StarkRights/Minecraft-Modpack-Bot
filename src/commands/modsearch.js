@@ -23,13 +23,13 @@ module.exports = {
       message.channel.send('No search paramaters given. \`Usage: mp!modsearch <search term> Ex: mp!modsearch revelations\`')
       return;
     }
-    const resultsEmbed = new MessageEmbed()
+    const loadingEmbed = new MessageEmbed()
       .setColor('#0099ff')
       .setTitle(`Querying results`)
       .setDescription(`This data isn't cached, which probably means you're the first one to run this command since the cache expired. If this happens often, it's more likely that something's broken.`)
       .setTimestamp()
       .setFooter('Powered by modpackindex.com');
-    const searchEmbedMessage = await message.channel.send(resultsEmbed);
+    const searchEmbedMessage = await message.channel.send(loadingEmbed);
     //Retrieve mod data from API request cache.
     const modsCache = await utils.getModsCache(100);
     const modsArray = await utils.cacheArrayifier(modsCache);
@@ -64,13 +64,17 @@ module.exports = {
       finalSearchSet[i] = searchResult[i];
     }
     let menuPage = 0;
-
+    const searchResultsEmbed = new MessageEmbed()
+      .setColor('#0099ff')
+      .setTitle(`Search Results For \'${args}\' | Page ${menuPage + 1}`)
+   	  .setTimestamp()
+      .setFooter('Powered by modpackindex.com');
     for(let i = 0; i <= 9; i++){
       if(i == finalSearchSet.length){break;}
       searchResultsEmbed.addField(`${i+1}) ${finalSearchSet[i].item.name} | \`ID: ${finalSearchSet[i].item.id}\``, finalSearchSet[i].item.summary);
     }
     //here, once again, lies stark's sanity. This line was placed in the If statement. Obvious issues arise with <10 search results
-    searchResultsMessage.edit(searchResultsEmbed);
+    searchEmbedMessage.edit(searchResultsEmbed);
     //No paging if search result is < 10 results
     if(finalSearchSet.length > 10)  {
       searchEmbedMessage.react('◀️');
