@@ -6,8 +6,8 @@ import Utils from '../utils/MPBotUtils.js'
 const utils = new Utils;
 import NodeCache from 'node-cache'
 import Fuse from 'fuse.js'
-import MongoWrapper from '../utils/MongoUtils'
-const guildsCollection = new MongoWrapper('Guilds');
+import MongoUtil from '../utils/MongoUtils'
+const guildsCollection = new MongoUtil('Guilds');
 
 const modsCache = new NodeCache();
 
@@ -23,23 +23,28 @@ module.exports = {
       message.channel.send('No search paramaters given. \`Usage: mp!modsearch <search term> Ex: mp!modsearch revelations\`')
       return;
     }
-
+    const loadingEmbed = new MessageEmbed()
+      .setColor('#0099ff')
+      .setTitle(`Querying results`)
+      .setDescription(`This data isn't cached, which probably means you're the first one to run this command since the cache expired. If this happens often, it's more likely that something's broken.`)
+      .setTimestamp()
+      .setFooter('Powered by modpackindex.com');
+    const searchEmbedMessage = await message.channel.send(loadingEmbed);
     //Retrieve mod data from API request cache.
     const modsCache = await utils.getModsCache(100);
     const modsArray = await utils.cacheArrayifier(modsCache);
 
     const guild = message.guild.id;
-    const query = 'threshold';
-    const threshold = await guildsCollection.readDocument(guild, query);
+    //const threshold = await guildsCollection.readDocument(guild, 'threshold');
     //initialize fuze object: Search name of mods for the exact search phrase anywhere in the title.
     const searchOptions = {
       includeScore: true,
       keys: ['name'],
       limit: 30,
       ignoreLocation: true,
-      threshold: threshold
+      threshold: .1
     }
-    log.info(`Threshold: ${threshold}`);
+    //log.info(`Threshold: ${threshold}`);
 
     const fuse = new Fuse(modsArray, searchOptions);
     let searchResult = await fuse.search(args);
@@ -66,11 +71,10 @@ module.exports = {
       .setFooter('Powered by modpackindex.com');
     for(let i = 0; i <= 9; i++){
       if(i == finalSearchSet.length){break;}
-      console.log(`finalSearchSet[i].item.name: ${finalSearchSet[i].item.name}`);
       searchResultsEmbed.addField(`${i+1}) ${finalSearchSet[i].item.name} | \`ID: ${finalSearchSet[i].item.id}\``, finalSearchSet[i].item.summary);
     }
     //here, once again, lies stark's sanity. This line was placed in the If statement. Obvious issues arise with <10 search results
-    const searchEmbedMessage = await message.channel.send(searchResultsEmbed);
+    searchEmbedMessage.edit(searchResultsEmbed);
     //No paging if search result is < 10 results
     if(finalSearchSet.length > 10)  {
       searchEmbedMessage.react('◀️');
@@ -81,9 +85,8 @@ module.exports = {
       };
       const reactionCollector = new ReactionCollector(searchEmbedMessage, reactionFilter, {time: 30000});
 
-      reactionCollector.on('collect', collectedReaction => {
-        collectedReaction.remove();
-        searchEmbedMessage.react(collectedReaction.emoji.name);
+      reactionCollector.on('collect', (collectedReaction, user) => {
+        collectedReaction.users.remove(user);
         //increment menuPage based on reaction
         if(collectedReaction.emoji.name == '▶️'){menuPage = menuPage + 1;}
         else if(collectedReaction.emoji.name == '◀️'){menuPage = menuPage - 1;}
@@ -105,6 +108,7 @@ module.exports = {
         searchResultsEmbed.setTitle(`Search Results For \'${args}\' | Page ${menuPage + 1}`);
         //edit message with edited embed.
         searchEmbedMessage.edit(searchResultsEmbed);
+        reactionCollector.resetTimer();
       });
     }
 

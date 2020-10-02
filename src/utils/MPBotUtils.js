@@ -8,6 +8,8 @@ const packsCache = new NodeCache({stdTTL:60*60*1, deleteOnExpire:false});
 import MPI from '../utils/ModPackIndexAPI.js'
 const modpackIndexAPI = new MPI;
 
+  //letter from the editor:
+  //Bars don't work properly, could be fixed, not important at the moment though.
 
 export default class Utils {
 
@@ -65,8 +67,6 @@ export default class Utils {
 
   async getPacksCache(pageSize){
     try{
-      console.log(`pcgetstats-> ${packsCache.getStats().keys}`);
-      console.log(`mcgetstats-> ${modsCache.getStats().keys}`);
         if(packsCache.getStats().keys == 0){
         let lastPage = await modpackIndexAPI.getPacks(pageSize, 1);
         lastPage = lastPage.meta.last_page;

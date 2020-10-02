@@ -19,15 +19,16 @@ module.exports = {
       message.channel.send('Invalid query/modID. \`Usage: mp!modsearch <modID> ex: mp!modsearch 1634\`');
       return;
     }
-    const resultsEmbed = new MessageEmbed()
+    const loadingEmbed = new MessageEmbed()
       .setColor('#0099ff')
       .setTitle(`Querying results`)
       .setDescription(`This data isn't cached, depending on the modpack size, this could take a minute.`)
       .setTimestamp()
       .setFooter('Powered by modpackindex.com');
-    const searchEmbedMessage = await message.channel.send(resultsEmbed);
+    const searchEmbedMessage = await message.channel.send(loadingEmbed);
 
-
+    //This should probably be done in MPBotUtils for consistency.
+    //Added to spring cleaning
     let packsPages = new Array();
     let lastPage = await modpackIndexAPI.getModpacksWithMod(args, 100, 1);
     lastPage = lastPage.meta.last_page;
@@ -62,10 +63,10 @@ module.exports = {
     const modObj = await modpackIndexAPI.getMod(args);
     const modName = modObj.data.name;
 
+    let resultsEmbed = new MessageEmbed();
     resultsEmbed
       .setColor('#0099ff')
       .setTitle(`Modpacks Containing \'${modName}\' | Page ${menuPage + 1}`)
-      .setDescription()
       .setTimestamp()
       .setFooter('Powered by modpackindex.com');
     for(let i = 0; i <= 9; i++){
@@ -86,9 +87,8 @@ module.exports = {
       };
       const reactionCollector = new ReactionCollector(searchEmbedMessage, reactionFilter, {time: 30000});
 
-      reactionCollector.on('collect', collectedReaction => {
-        collectedReaction.remove();
-        searchEmbedMessage.react(collectedReaction.emoji.name);
+      reactionCollector.on('collect', (collectedReaction, user) => {
+        collectedReaction.users.remove(user);
         //increment menuPage based on reaction
         if(collectedReaction.emoji.name == '▶️'){menuPage = menuPage + 1;}
         else if(collectedReaction.emoji.name == '◀️'){menuPage = menuPage - 1;}

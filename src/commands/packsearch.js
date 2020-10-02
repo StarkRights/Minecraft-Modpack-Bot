@@ -21,7 +21,13 @@ module.exports = {
       message.channel.send('No search paramaters given. \`Usage: mp!packsearch <search term> Ex: mp!packsearch revelations\`')
       return;
     }
-
+    const loadingEmbed = new MessageEmbed()
+      .setColor('#0099ff')
+      .setTitle(`Querying results`)
+      .setDescription(`This data isn't cached, which probably means you're the first one to run this command since the cache expired. If this happens often, it's more likely that something's broken.`)
+      .setTimestamp()
+      .setFooter('Powered by modpackindex.com');
+    const searchEmbedMessage = await message.channel.send(loadingEmbed);
     //Retrieve mod data from API request cache.
     const packsCache = await utils.getPacksCache(100);
     const packsArray = await utils.cacheArrayifier(packsCache);
@@ -50,17 +56,18 @@ module.exports = {
     for(let i = 0; (i+1) <= searchResult.length; i++){
       finalSearchSet[i] = searchResult[i];
     }
-
+    let menuPage = 0;
     const searchResultsEmbed = new MessageEmbed()
       .setColor('#0099ff')
-      .setTitle(`Search Results For \'${args}\'`)
-   	  .setTimestamp()
+      .setTitle(`Search Results For \'${args}\' | Page ${menuPage + 1}`)
+      .setTimestamp()
       .setFooter('Powered by modpackindex.com');
     for(let i = 0; i <= 9; i++){
       if(i == finalSearchSet.length){break;}
-      searchResultsEmbed.addField(`${i+1}) ${finalSearchSet[i].item.name}`, finalSearchSet[i].item.summary);
+      searchResultsEmbed.addField(`${i+1}) ${finalSearchSet[i].item.name} | \`ID: ${finalSearchSet[i].item.id}\``, finalSearchSet[i].item.summary);
     }
-    message.channel.send(searchResultsEmbed);
+
+    searchEmbedMessage.edit(searchResultsEmbed);
     const filter = m => (m.author.id === message.author.id);
     const collector = message.channel.createMessageCollector(filter, {max: 1, maxMatches: 1, time: 10000});
     collector.on('collect', collectedMessage => {
@@ -71,6 +78,41 @@ module.exports = {
         //Here lies stark's sanity - killed by using = instead of === like a fucking idiot
         if(i===0){ authors = authors + `${selectedPack.item.authors[i].name}`}
         else{authors = authors + `, ${selectedPack.item.authors[i].name}`}
+      }
+
+      if(finalSearchSet.length > 10)  {
+        searchEmbedMessage.react('◀️');
+        searchEmbedMessage.react('▶️');
+        //filter non-requester reactions, and non-arrow reactions
+        const reactionFilter = (reaction, user) => {
+          return ((reaction.emoji.name == '▶️') || (reaction.emoji.name == '◀️')) && (user.id === message.author.id);
+        };
+        const reactionCollector = new ReactionCollector(searchEmbedMessage, reactionFilter, {time: 30000});
+
+        reactionCollector.on('collect', (collectedReaction, user) => {
+          collectedReaction.users.remove(user);
+          //increment menuPage based on reaction
+          if(collectedReaction.emoji.name == '▶️'){menuPage = menuPage + 1;}
+          else if(collectedReaction.emoji.name == '◀️'){menuPage = menuPage - 1;}
+          else{log.error(`PackSearch#MenuPagingError -> Collected Reaction != Left or Right Arrow`);}
+          //menuPage can only go as low as 0.
+          if(menuPage < 0){menuPage = 0;}
+          //delete all old fields
+          searchResultsEmbed.spliceFields(0, 10);
+          //iterate 10 new fields in
+          for(let i = 0; i <= 9; i++){
+            //break if we reach the end of search results
+            if((menuPage*10 + i) == finalSearchSet.length){break;}
+                                        //add 10*menupage to the index.
+            let packNumber = (menuPage*10) + i;
+            let modObj = finalSearchSet[packNumber].item;
+
+            searchResultsEmbed.addField(`${packNumber}) ${packObj.name} | \`ID: ${packObj.id}\``, packObj.summary);
+          }
+          searchResultsEmbed.setTitle(`Search Results For \'${args}\' | Page ${menuPage + 1}`);
+          //edit message with edited embed.
+          searchEmbedMessage.edit(searchResultsEmbed);
+        });
       }
 
       const modEmbed = new MessageEmbed()

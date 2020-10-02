@@ -21,7 +21,8 @@ module.exports = {
     }
     let modsPages = new Array();
 
-
+    //This should probably be done in MPBotUtils for consistency.
+    //Added to spring cleaning
     let modsObject = await modpackIndexAPI.getModpackMods(args);
     let modsArray = new Array();
 
@@ -68,9 +69,8 @@ module.exports = {
       };
       const reactionCollector = new ReactionCollector(searchEmbedMessage, reactionFilter, {time: 30000});
 
-      reactionCollector.on('collect', collectedReaction => {
-        collectedReaction.remove();
-        searchEmbedMessage.react(collectedReaction.emoji.name);
+      reactionCollector.on('collect', (collectedReaction, user) => {
+        collectedReaction.users.remove(user);
         //increment menuPage based on reaction
         if(collectedReaction.emoji.name == '▶️'){menuPage = menuPage + 1;}
         else if(collectedReaction.emoji.name == '◀️'){menuPage = menuPage - 1;}
