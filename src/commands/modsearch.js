@@ -79,9 +79,8 @@ module.exports = {
       };
       const reactionCollector = new ReactionCollector(searchEmbedMessage, reactionFilter, {time: 30000});
 
-      reactionCollector.on('collect', collectedReaction => {
-        collectedReaction.remove();
-        searchEmbedMessage.react(collectedReaction.emoji.name);
+      reactionCollector.on('collect', (collectedReaction, user) => {
+        collectedReaction.users.remove(user);
         //increment menuPage based on reaction
         if(collectedReaction.emoji.name == '▶️'){menuPage = menuPage + 1;}
         else if(collectedReaction.emoji.name == '◀️'){menuPage = menuPage - 1;}
@@ -103,6 +102,7 @@ module.exports = {
         searchResultsEmbed.setTitle(`Search Results For \'${args}\' | Page ${menuPage + 1}`);
         //edit message with edited embed.
         searchEmbedMessage.edit(searchResultsEmbed);
+        reactionCollector.resetTimer();
       });
     }
 
