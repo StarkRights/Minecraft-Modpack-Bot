@@ -40,9 +40,11 @@ client.on('message', async (message) => {
 	if (!message.content.startsWith(prefix) || message.author.bot) return;
 
 	//better way to do this, 100% no doubt, but I'm lazy asf so stfu future stark.
+
 	const commandArray = await message.content.slice(prefix.length).split(/ +/);
 	const command = await commandArray.shift().toLowerCase();
-	const args = await message.content.replace(prefix+command+' ', '');
+
+	const args = commandArray;
 
 	try {
 		await client.commands.get(command).execute(message, args);

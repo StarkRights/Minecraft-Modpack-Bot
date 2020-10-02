@@ -15,7 +15,7 @@ module.exports = {
   name: 'modsin',
   description: 'displays mods in a certain pack',
   async execute (message, args){
-    if(isNaN(args)){
+    if(isNaN(args[0])){
       message.channel.send('Invalid query/modID. \`Usage: mp!modsearch <modID> ex: mp!modsearch 1634\`');
       return;
     }
@@ -23,7 +23,7 @@ module.exports = {
 
     //This should probably be done in MPBotUtils for consistency.
     //Added to spring cleaning
-    let modsObject = await modpackIndexAPI.getModpackMods(args);
+    let modsObject = await modpackIndexAPI.getModpackMods(args[0]);
     let modsArray = new Array();
 
     for(let i = 0; i < modsObject.data.length; i++){
@@ -43,7 +43,7 @@ module.exports = {
     let menuPage = 0;
 
 
-    const modObj = await modpackIndexAPI.getModpack(args)
+    const modObj = await modpackIndexAPI.getModpack(args[0])
     const packName = modObj.data.name
 
     const resultsEmbed = new MessageEmbed()
@@ -89,7 +89,7 @@ module.exports = {
 
           resultsEmbed.addField(`${modNumber}) ${modObj.name} | \`ID: ${modObj.id}\``, modObj.summary);
         }
-        resultsEmbed.setTitle(`Search Results For \'${args}\' | Page ${menuPage + 1}`);
+        resultsEmbed.setTitle(`Search Results For \'${args[0]}\' | Page ${menuPage + 1}`);
         //edit message with edited embed.
         searchEmbedMessage.edit(resultsEmbed);
       });

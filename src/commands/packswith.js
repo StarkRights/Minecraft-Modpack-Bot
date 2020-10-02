@@ -15,7 +15,7 @@ module.exports = {
   name: 'packswith',
   description: 'displays packs containing a user selected mod',
   async execute (message, args){
-    if(isNaN(args)){
+    if(isNaN(args[0])){
       message.channel.send('Invalid query/modID. \`Usage: mp!modsearch <modID> ex: mp!modsearch 1634\`');
       return;
     }
@@ -30,10 +30,10 @@ module.exports = {
     //This should probably be done in MPBotUtils for consistency.
     //Added to spring cleaning
     let packsPages = new Array();
-    let lastPage = await modpackIndexAPI.getModpacksWithMod(args, 100, 1);
+    let lastPage = await modpackIndexAPI.getModpacksWithMod(args[0], 100, 1);
     lastPage = lastPage.meta.last_page;
     for (let pageNumber = 1; pageNumber <= lastPage; pageNumber++){
-      let packsObject = await modpackIndexAPI.getModpacksWithMod(args, 100, pageNumber);
+      let packsObject = await modpackIndexAPI.getModpacksWithMod(args[0], 100, pageNumber);
       packsPages[pageNumber-1] = packsObject;
     }
 
@@ -60,7 +60,7 @@ module.exports = {
 
     let menuPage = 0;
 
-    const modObj = await modpackIndexAPI.getMod(args);
+    const modObj = await modpackIndexAPI.getMod(args[0]);
     const modName = modObj.data.name;
 
     let resultsEmbed = new MessageEmbed();
@@ -108,7 +108,7 @@ module.exports = {
 
           resultsEmbed.addField(`${modNumber}) ${modObj.name} | \`ID: ${modObj.id}\``, modObj.summary);
         }
-        resultsEmbed.setTitle(`Search Results For \'${args}\' | Page ${menuPage + 1}`);
+        resultsEmbed.setTitle(`Search Results For \'${args[0]}\' | Page ${menuPage + 1}`);
         //edit message with edited embed.
         searchEmbedMessage.edit(resultsEmbed);
       });
