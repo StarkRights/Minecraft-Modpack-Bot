@@ -21,7 +21,7 @@ async function ownerInit(){
 		const date = new Date();
 		const formattedDate = `[${date.toISOString()}]`;
 		owner.send(`${formattedDate}ModPackIndexBot#Ready -> ready`);
-	} catch(e){ log.error(e);}
+	} catch(e){ log.error(`OwnerInit#initializeFailure -> ${e}`);}
 
 }
 
