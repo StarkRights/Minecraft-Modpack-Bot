@@ -18,7 +18,9 @@ client.commands = new Collection();
 async function ownerInit(){
 	try{
 		const owner = await client.users.fetch(ownerID, false);
-		owner.send(`OwnerObject Initialized!`);
+		const date = new Date();
+		const formattedDate = `[${date.toISOString()}]`;
+		owner.send(`${formattedDate}ModPackIndexBot#Ready -> ready`);
 	} catch(e){ log.error(e);}
 
 }
