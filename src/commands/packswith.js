@@ -27,7 +27,8 @@ module.exports = {
       .setFooter('Powered by modpackindex.com');
     const searchEmbedMessage = await message.channel.send(resultsEmbed);
 
-
+    //This should probably be done in MPBotUtils for consistency.
+    //Added to spring cleaning
     let packsPages = new Array();
     let lastPage = await modpackIndexAPI.getModpacksWithMod(args, 100, 1);
     lastPage = lastPage.meta.last_page;

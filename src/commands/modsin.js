@@ -21,7 +21,8 @@ module.exports = {
     }
     let modsPages = new Array();
 
-
+    //This should probably be done in MPBotUtils for consistency.
+    //Added to spring cleaning
     let modsObject = await modpackIndexAPI.getModpackMods(args);
     let modsArray = new Array();
 
