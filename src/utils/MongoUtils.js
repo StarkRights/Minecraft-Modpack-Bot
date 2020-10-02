@@ -26,7 +26,7 @@ export default class MongoUtil {
 
   async initialize(){
     await this.client.connect(err => {
-      if(err){log.error(`MongoUtils#connectionFailure -> ${e}`)}
+      if(err){log.error(`MongoUtils#connectionFailure -> ${err}`)}
       else{log.info(`MongoUtils#connection -> ready...`)}
     });
     db = await this.client.db(dbName);
