@@ -67,8 +67,6 @@ export default class Utils {
 
   async getPacksCache(pageSize){
     try{
-      console.log(`pcgetstats-> ${packsCache.getStats().keys}`);
-      console.log(`mcgetstats-> ${modsCache.getStats().keys}`);
         if(packsCache.getStats().keys == 0){
         let lastPage = await modpackIndexAPI.getPacks(pageSize, 1);
         lastPage = lastPage.meta.last_page;
