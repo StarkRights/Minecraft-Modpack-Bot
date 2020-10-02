@@ -15,7 +15,7 @@ const ownerID = config.ownerID
 const client = new Client();
 client.commands = new Collection();
 
-const owner = new User(client, ownerID);
+const owner = client.users.cache.get(ownerID);
 
 const commandFiles = readdirSync(join(__dirname, 'commands')).filter(file => file.endsWith('.js'));
 for (const file of commandFiles) {
