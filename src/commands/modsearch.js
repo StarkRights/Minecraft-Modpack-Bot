@@ -65,7 +65,6 @@ module.exports = {
       .setFooter('Powered by modpackindex.com');
     for(let i = 0; i <= 9; i++){
       if(i == finalSearchSet.length){break;}
-      console.log(`finalSearchSet[i].item.name: ${finalSearchSet[i].item.name}`);
       searchResultsEmbed.addField(`${i+1}) ${finalSearchSet[i].item.name} | \`ID: ${finalSearchSet[i].item.id}\``, finalSearchSet[i].item.summary);
     }
     //here, once again, lies stark's sanity. This line was placed in the If statement. Obvious issues arise with <10 search results
