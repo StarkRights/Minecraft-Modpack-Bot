@@ -66,7 +66,7 @@ module.exports = {
     let menuPage = 0;
     const searchResultsEmbed = new MessageEmbed()
       .setColor('#0099ff')
-      .setTitle(`Search Results For \'${args[0]}\' | Page ${menuPage + 1}`)
+      .setTitle(`Search Results For \'${args.join(' ')}\' | Page ${menuPage + 1}`)
    	  .setTimestamp()
       .setFooter('Powered by modpackindex.com');
     for(let i = 0; i <= 9; i++){
