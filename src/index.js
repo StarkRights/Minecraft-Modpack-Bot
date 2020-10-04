@@ -15,12 +15,14 @@ const ownerID = config.ownerID
 const client = new Client();
 client.commands = new Collection();
 
+let ownerObject;
 async function ownerInit(){
 	try{
 		const owner = await client.users.fetch(ownerID, false);
 		const date = new Date();
 		const formattedDate = `[${date.toISOString()}]`;
 		owner.send(`${formattedDate}ModPackIndexBot#Ready -> ready`);
+		ownerObject = owner;
 	} catch(e){ log.error(`OwnerInit#initializeFailure -> ${e}`);}
 
 }
@@ -50,8 +52,8 @@ client.on('message', async (message) => {
 		await client.commands.get(command).execute(message, args);
 	} catch (error) {
 		log.error(`Client#commandExecutionError -> ${error}`);
-		await message.reply('There was an error trying to execute the command. If you\'re seeing this, it means the error was not caught within the command.');
-		await owner.send(`An uncaught error was encountered. |Guild: \'${message.guild.name}\'<${message.guild.id}>|Message: \'${message.id}\'|Console Error: \`Client#commandExecutionError -> ${error}\``);
+		await message.reply('There was an error trying to execute the command. If you\'re seeing this, it means the error was not caught within the command. \n TL;DR, uh-oh');
+		await ownerObject.send(`An uncaught error was encountered. |Guild: \'${message.guild.name}\'<${message.guild.id}>|Message: \'${message.id}\'|Console Error: \`Client#commandExecutionError -> ${error}\``);
 	}
 });
 
