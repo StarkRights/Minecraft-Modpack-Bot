@@ -77,7 +77,12 @@ export default class ModPackIndex {
   async getMods(limit, page){
     try{
       const response = await fetch(this.baseURL + `mods?limit=${limit}&page=${page}`);
-      //console.log(await response.json());
+      const rateLimit = response.headers.raw()['X-RateLimit-Remaining'];
+      const retryAfter = response.headers.raw()['retry-after'];
+      if(retryAfter){
+        log.info(`Ratelimit: ${rateLimit}`);
+        log.info(`RetryAfter: ${retryAfter}`);
+      }
       return await response.json();
     }
     catch(e){

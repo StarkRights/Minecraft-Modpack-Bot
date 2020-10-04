@@ -6,8 +6,6 @@ import Fuse from 'fuse.js'
  */
 export default class Search{
 
-
-
   /**
    * search - Performs a Fuse Search on the instantiated Object's data.
    *
@@ -20,7 +18,7 @@ export default class Search{
       keys: ['name'],
       limit: 30,
       ignoreLocation: true,
-      threshold: .1
+      threshold: .0
     }
     const fuse = new Fuse(data, searchOptions);
     let searchResult = fuse.search(query);
@@ -32,7 +30,7 @@ export default class Search{
    * sortPopularity - Sorts an array by it's MPI Popularity rank
    *
    * @param  {Array} data Data to be sorted
-   * @return {Array}      Data array ordered by decreasing popularity.   
+   * @return {Array}      Data array ordered by decreasing popularity.
    */
   sortPopularity(data){
     data.sort(function(a,b){
