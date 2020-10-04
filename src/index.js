@@ -52,7 +52,7 @@ client.on('message', async (message) => {
 		await client.commands.get(command).execute(message, args);
 	} catch (error) {
 		log.error(`Client#commandExecutionError -> ${error}`);
-		await message.reply('There was an error trying to execute the command. If you\'re seeing this, it means the error was not caught within the command. \n TL;DR, uh-oh');
+		await message.reply('There was an error trying to execute the command.');
 		await ownerObject.send(`An uncaught error was encountered. |Guild: \'${message.guild.name}\'<${message.guild.id}>|Message: \'${message.id}\'|Console Error: \`Client#commandExecutionError -> ${error}\``);
 	}
 });

@@ -10,7 +10,7 @@ export default class Search{
    * search - Performs a Fuse Search on the instantiated Object's data.
    *
    * @param  {string} query The search query
-   * @return {Array}       A Fuse-Searched array with metadata.
+   * @return {Array}       A trimmed Fuse-Searched array.
    */
   search(data, query){
     const searchOptions = {
@@ -21,8 +21,13 @@ export default class Search{
       threshold: .0
     }
     const fuse = new Fuse(data, searchOptions);
-    let searchResult = fuse.search(query);
-    return searchResult;
+    const searchResult = fuse.search(query);
+    let parsedArray = new Array();
+    for(let i = 0; (i+1) <= searchResult.length; i++){
+      parsedArray[i] = searchResult[i].item;
+    }
+
+    return parsedArray;
   }
 
 
@@ -34,8 +39,15 @@ export default class Search{
    */
   sortPopularity(data){
     data.sort(function(a,b){
-      return a.item.popularity_rank-b.item.popularity_rank;
+      return a.popularity_rank-b.popularity_rank;
     });
+    return data;
+  }
+
+  sortAlphabetically(data){
+    data.sort((a, b)=>
+      a.name.localeCompare(b.name)
+    );
     return data;
   }
 }

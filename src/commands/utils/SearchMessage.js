@@ -1,6 +1,7 @@
 import log from '../../log'
 import {MessageEmbed} from 'discord.js'
 import Paginator from '../utils/Paginator.js'
+import ErrorMessage from './ErrorMessage.js'
 
 
 
@@ -22,7 +23,15 @@ export default class SearchMessage {
       .setDescription(`This hasn't been cached yet, which probably means you're the first one to run this command since the cache expired. If this happens often, it's more likely that something's broken.`)
       .setTimestamp()
       .setFooter('Powered by modpackindex.com');
-    this.responseMessage = await this.commandMessage.channel.send(this.messageEmbed);
+
+    this.responseMessage;
+    try{
+      this.responseMessage = await this.commandMessage.channel.send(this.messageEmbed);
+    } catch(e){
+      log.error(`SearchMessage#loadingMessage -> ${e}`);
+      this.responseMessage = await this.commandMessage.channel.send('The bot could not send the embed containing the search results. This is likely due to missing the \`embed-links\` permission');
+      return -1;
+    }
     return this.responseMessage;
   }
 
@@ -31,7 +40,7 @@ export default class SearchMessage {
    *
    * @return {void}  description
    */
-  async sendSearchResults(searchSet){
+  async sendSearchResults(searchSet, title){
     if(!this.responseMessage){
       log.error(`SearchMessageUtil#chronologyError -> update message called without an existing message`);
       return -1;
@@ -42,7 +51,7 @@ export default class SearchMessage {
     const args = this.query;
     const resultsEmbed = new MessageEmbed()
       .setColor('#0099ff')
-      .setTitle(`Search Results For \'${args.join(' ')}\' | Page 1`)
+      .setTitle(`${title} | Page 1`)
       .setTimestamp()
       .setFooter('Powered by modpackindex.com');
     //send message with paged results. Pagination handled in paginator

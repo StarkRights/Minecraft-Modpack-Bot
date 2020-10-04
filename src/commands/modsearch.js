@@ -20,7 +20,7 @@ module.exports = {
     }
     //send query loading message
     const searchMessage = new SearchMessage(message, args)
-    await searchMessage.sendLoadingMessage()
+    if(await searchMessage.sendLoadingMessage() == -1){return;}
 
     //Retrieve mod data from API Request cache.
     const modsCache = await utils.getModsCache(100);
@@ -32,7 +32,7 @@ module.exports = {
     const sortedResult = searcher.sortPopularity(searcher.search(modsArray, searchQuery));
 
     //ship the data off to be backaged, paginated & displayed to the user
-    searchMessage.sendSearchResults(sortedResult);
+    searchMessage.sendSearchResults(sortedResult, `Search Results For \'${args.join(' ')}\'`);
 
   }
 }

@@ -75,7 +75,7 @@ export default class Utils {
           barCompleteChar: '\u2588',
         });
         bar2.start(lastPage, 0);
-        for (let pageNumber = 1; pageNumber <= lastPage; pageNumber++){
+        for (let pageNumber = 1; pageNumber <= 23; pageNumber++){
           let packsObject = await modpackIndexAPI.getPacks(pageSize, pageNumber);
           packsCache.set(pageNumber, packsObject);
           bar2.increment();

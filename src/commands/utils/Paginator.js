@@ -1,5 +1,6 @@
 import log from '../../log'
-import {ReactionCollector} from 'discord.js'
+import ErrorMessage from './ErrorMessage.js'
+import {ReactionCollector, MessageEmbed} from 'discord.js'
 
 
 export default class Paginator{
@@ -10,24 +11,31 @@ export default class Paginator{
 
   paginate(embed, pageNumber){
     let paginatedEmbed = embed;
-    console.log('')
     for(let i = 0; i <= 9; i++){
       if(i == this.dataArray.length){
         break;
       }
 
       const modNumber = (i)+(10*(pageNumber));
-      const modName = this.dataArray[modNumber].item.name;
-      const modID = this.dataArray[modNumber].item.id;
-      const modSummary = this.dataArray[modNumber].item.summary;
+      const modName = this.dataArray[modNumber].name;
+      const modID = this.dataArray[modNumber].id;
+      const modSummary = this.dataArray[modNumber].summary;
       paginatedEmbed.addField(`${modNumber+1}) ${modName} | \`ID: ${modID}\``, modSummary);
     }
     return paginatedEmbed;
   }
 
-  reactionPager(message, userMessage, embed, maxFields, options){
-    message.react('◀️');
-    message.react('▶️');
+  async reactionPager(message, userMessage, embed, maxFields, options){
+
+    try{
+      const reaction1 = await message.react('◀️');
+      const reaction2 = await message.react('▶️');
+    } catch(e){
+      log.error(`reactionPager#reactionFailure -> ${e}`);
+      const errorMessage = new ErrorMessage(messsage, e, 'Pagination', 'The bot could not react to its message. This is likely due to missing the \`add-reactions\` permission');
+      errorMessage.sendError();
+    }
+
     const reactionFilter = (reaction, user) => {
       const isNextPage = (reaction.emoji.name == '▶️');
       const isPrevPage = (reaction.emoji.name == '◀️');
@@ -36,12 +44,16 @@ export default class Paginator{
 
     const reactionCollector = new ReactionCollector(message, reactionFilter, options);
     let menuPage = 0;
-    reactionCollector.on('collect', (collectedReaction, user) => {
+    reactionCollector.on('collect', async (collectedReaction, user) => {
       const isNextPage = (collectedReaction.emoji.name == '▶️');
       const isPrevPage = (collectedReaction.emoji.name == '◀️');
       //remove user's reaction to allow them to react again
-      collectedReaction.users.remove(user);
-
+      try{ await collectedReaction.users.remove(user); }
+      catch(e){
+        log.error(`reactionPager#reactionDeleteFailure -> ${e}`);
+        const errorMessage = new ErrorMessage(message, e, 'Pagination', 'The bot could not remove user reactions. This is likely due to missing the \`manage-messages\` permission');
+        errorMessage.sendError();
+      }
       //Increment menupage based on reaction, disallow negative pages
       if(isNextPage){menuPage = menuPage + 1};
       if(isPrevPage){menuPage = menuPage - 1};
