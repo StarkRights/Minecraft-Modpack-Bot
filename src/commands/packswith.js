@@ -25,17 +25,25 @@ module.exports = {
 
 
     const packID = args[0];
-    let packsObject = await modpackIndexAPI.getModpacksWithMod(packID, 100, 1);
-    const packsArray = packsObject.data;
+    let lastPage = await modpackIndexAPI.getModpacksWithMod(packID, 100, 1);
+    lastPage = lastPage.meta.last_page;
+    let packsArray = new Array();
+    //needs to be done 'in-house' due to MPIAPI limitations at the moment. It makes no sense to cache these, as they're specific mods and that starts to take up memory like fuck.
+    for(let pageNumber = 1; pageNumber <= lastPage; pageNumber++){
+      const nextObject = await modpackIndexAPI.getModpacksWithMod(packID, 100, pageNumber);
+      for(let i = 0; (i+1) <= nextObject.data.length; i++){
+            packsArray[(pageNumber-1)*10+i] = nextObject.data[i];
+      }
+    }
 
     //sort the set of mods sortAlphabetically
     const searcher = new Search();
-    const sortedResult = searcher.sortAlphabetically(packsObject.data)
+    const sortedResult = searcher.sortPopularity(packsArray);
 
     const mod = await modpackIndexAPI.getMod(args[0]);
     const modTitle = mod.data.name;
 
     //ship data off to be packaged, paginated & displayed to the user.
-    searchMessage.sendSearchResults(sortedResult, `Mods in \'${modTitle}\'`)
+    searchMessage.sendSearchResults(sortedResult, `Packs With \'${modTitle}\'`)
   }
 }
