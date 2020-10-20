@@ -18,7 +18,7 @@ export default class Search{
       keys: ['name'],
       limit: 30,
       ignoreLocation: true,
-      threshold: .0
+      threshold: .1
     }
     const fuse = new Fuse(data, searchOptions);
     const searchResult = fuse.search(query);

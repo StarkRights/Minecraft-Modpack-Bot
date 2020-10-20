@@ -2,6 +2,15 @@ import fetch from 'node-fetch'
 import log from '../log'
 
 
+
+/*
+    We do some dumb stuff here. Specifically, we return the entire HTTP request
+    response body- which is stupid in and of itself.
+    This needs to be changed to only return the data of the response body, &
+    MPBotUtils updated to reflect those changes
+
+*/
+
 export default class ModPackIndex {
   constructor(){
     this.baseURL = 'https://www.modpackindex.com/api/v1/';

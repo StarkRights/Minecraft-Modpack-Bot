@@ -33,6 +33,5 @@ module.exports = {
 
     //ship the data off to be backaged, paginated & displayed to the user
     searchMessage.sendSearchResults(sortedResult, `Search Results For \'${args.join(' ')}\'`);
-
   }
 }

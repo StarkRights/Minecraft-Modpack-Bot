@@ -7,7 +7,7 @@ import {join} from 'path'
 import MongoUtil from './utils/MongoUtils'
 
 const mongoUtil = new MongoUtil('Guilds');
-mongoUtil.initialize();
+//mongoUtil.initialize();
 
 const token = config.token;
 const prefix = config.prefix;

@@ -17,7 +17,7 @@ export default class Utils {
    * async cacheArrayifier - Places each key in a cache object into a singular array
    *
    * @param  {type} cache cache to be arrayified
-   * @return {Array}          an Array where each entry is a keyValue from the cache.
+   * @return {Array}      an Array where each index is a mod-object
    */
   async cacheArrayifier(cache){
       let cacheArray = new Array();
@@ -50,7 +50,7 @@ export default class Utils {
         barCompleteChar: '\u2588',
       });
       bar1.start(lastPage, 0);
-      for(let pageNumber = 1; pageNumber <= lastPage; pageNumber++){
+      for(let pageNumber = 1; pageNumber <= 23; pageNumber++){
         let modsObject = await modpackIndexAPI.getMods(pageSize, pageNumber);
         modsCache.set(pageNumber, modsObject);
         bar1.increment();
@@ -70,11 +70,13 @@ export default class Utils {
         if(packsCache.getStats().keys == 0){
         let lastPage = await modpackIndexAPI.getPacks(pageSize, 1);
         lastPage = lastPage.meta.last_page;
+
         const bar2 = new cliProgress.SingleBar({
           format: 'Modpack Cacheing Progress |' + ('{bar}') + '| {percentage}% || {value}/{total} Modpacks || Eta: {eta}s',
           barCompleteChar: '\u2588',
         });
         bar2.start(lastPage, 0);
+
         for (let pageNumber = 1; pageNumber <= 23; pageNumber++){
           let packsObject = await modpackIndexAPI.getPacks(pageSize, pageNumber);
           packsCache.set(pageNumber, packsObject);

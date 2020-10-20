@@ -22,6 +22,11 @@ module.exports = {
     const searchMessage = new SearchMessage(message, args);
     if(await searchMessage.sendLoadingMessage() == -1){return;}
 
+/*
+    Why am I wasting this extra line- this function needs to be one thing. 
+    Note to self: make "getPacksArray in utils."
+*/
+
     //Retrieve pack data from API request cache.
     const packsCache = await utils.getPacksCache(100);
     const packsArray = await utils.cacheArrayifier(packsCache);
