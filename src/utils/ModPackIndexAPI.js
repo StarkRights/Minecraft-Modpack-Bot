@@ -45,7 +45,7 @@ export default class ModPackIndex {
    * @param  {number} modpackId MPI ID of modpack
    * @return {object}           JSON Object of modpack details
    */
-  async getModpack(modpackId){
+  async getPack(modpackId){
     try{
       const response = await fetch(this.baseURL + `modpack/${modpackId}`);
       return response.json();

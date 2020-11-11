@@ -23,7 +23,7 @@ module.exports = {
     if(await searchMessage.sendLoadingMessage() == -1){return;}
 
 /*
-    Why am I wasting this extra line- this function needs to be one thing. 
+    Why am I wasting this extra line- this function needs to be one thing.
     Note to self: make "getPacksArray in utils."
 */
 

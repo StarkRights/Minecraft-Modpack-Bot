@@ -34,7 +34,7 @@ export default class Utils {
   /**
    * async modsCache - Returns a singular *cached* array of all the objects from an MPI API request
    *
-   * @param  {num} pageSize number of objects to be returned on a page (Max 100, per API restrictoins)
+   * @param  {number} pageSize number of objects to be returned on a page (Max 100, per API restrictoins)
    * @return {NodeCache}    a NodeCache object which contains each individual page object from the MPI API
    */
   async getModsCache(pageSize){

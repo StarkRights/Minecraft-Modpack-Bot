@@ -20,17 +20,17 @@ export default class SearchMessage {
     this.messageEmbed = new MessageEmbed()
       .setColor('#0099ff')
       .setTitle(`Querying results`)
-      .setDescription(`This hasn't been cached yet, which probably means you're the first one to run this command since the cache expired. If this happens often, it's more likely that something's broken.`)
+      .setDescription(`If this is taking a moment, the bot is probably cacheing data. Try again in a few seconds if this message doesn't change`)
       .setTimestamp()
       .setFooter('Powered by modpackindex.com');
 
     this.responseMessage;
+    //Error handling needs to migrate to ErrorMessage format.
     try{
       this.responseMessage = await this.commandMessage.channel.send(this.messageEmbed);
     } catch(e){
       log.error(`SearchMessage#loadingMessage -> ${e}`);
       this.responseMessage = await this.commandMessage.channel.send('The bot could not send the embed containing the search results. This is likely due to missing the \`embed-links\` permission');
-      return -1;
     }
     return this.responseMessage;
   }
@@ -52,6 +52,7 @@ export default class SearchMessage {
     const resultsEmbed = new MessageEmbed()
       .setColor('#0099ff')
       .setTitle(`${title} | Page 1`)
+      .setDescription(`Use \`mp!modinfo\` or \`mp!packinfo\` to get details about a specific mod, or a link to its ModPackIndex page.`)
       .setTimestamp()
       .setFooter('Powered by modpackindex.com');
     //send message with paged results. Pagination handled in paginator

@@ -48,7 +48,6 @@ export default class InfoMessage {
       return -1;
     }
 
-    if(!infoObject){return;}
     //Package retreived information & ship it
     const title = infoObject.name;
     let authors;

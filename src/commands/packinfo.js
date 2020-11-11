@@ -3,7 +3,7 @@ import log from '../log'
 import MPI from '../utils/ModPackIndexAPI.js'
 import Utils from '../utils/MPBotUtils.js'
 import InfoMessage from './utils/InfoMessage.js'
-const modpackIndexAPI = new MPI;
+const mpiAPI = new MPI;
 const utils = new Utils;
 
 
@@ -25,7 +25,7 @@ module.exports = {
       const nextObjID = nextObj.id;
       if(nextObjID == packID){
         isValid = true;
-        packObj = mpiapi.;
+        packObj = await mpiAPI.getPack(packID).data;
       }
     }
 

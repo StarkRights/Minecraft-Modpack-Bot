@@ -51,13 +51,22 @@ client.on('message', async (message) => {
 	try {
 		await client.commands.get(command).execute(message, args);
 	} catch (error) {
+		//Here we catch any command-breaking errors. These need to be processed &
+		// shipped off to 4 separate places.
+		// 1) Console error logging
+		// 2) User chat logging
+		// 2) Database statistic Logging
+		// 3) Owner DM Logging
+
 		log.error(`Client#commandExecutionError -> ${error}`);
-		await message.reply('There was an error trying to execute the command.');
-		await ownerObject.send(`An uncaught error was encountered. |Guild: \'${message.guild.name}\'<${message.guild.id}>|Message: \'${message.id}\'|Console Error: \`Client#commandExecutionError -> ${error}\``);
+		//this needs to go away: migrate to ErrorMessage: await message.reply('There was an error trying to execute the command.');
+		const errorMessage = new ErrorMesage(message, error, type, details);
+
+		await ownerObject.send(`An uncaught error was encountered. |Guild: \'${message.guild.name}\'<${message.guild.id}>|Message: \'${message.id}\'\nConsole Error: \`Client#commandExecutionError -> ${error}\``);
 	}
 });
 
-client.on('guildCreate', async (guild) =>{
+client.on('guildCreate', async (guild) => {
 	//if guild doc doesn't exist
 	const testDocument = guild.id;
 	if(await mongoUtil.doesDocument() == false){

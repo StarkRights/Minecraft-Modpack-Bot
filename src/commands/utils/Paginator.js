@@ -51,8 +51,16 @@ export default class Paginator{
       try{ await collectedReaction.users.remove(user); }
       catch(e){
         log.error(`reactionPager#reactionDeleteFailure -> ${e}`);
-        const errorMessage = new ErrorMessage(message, e, 'Pagination', 'The bot could not remove user reactions. This is likely due to missing the \`manage-messages\` permission');
+        const error = new Error()
+          .setType('Pagination')
+          .setError(e)
+          .setDetails('The bot could not remove user reactions. This is likely due to missing the \`manage-messages\` permission')
+          .setMessage(userMessage);
+        /* old
+        const errorMessage = new ErrorMessage(message, error);
         errorMessage.sendError();
+        */
+        throw error;
       }
       //Increment menupage based on reaction, disallow negative pages
       if(isNextPage){menuPage = menuPage + 1};
@@ -68,6 +76,7 @@ export default class Paginator{
       //restart collector for another 30 seconds.
       reactionCollector.resetTimer();
     });
+    // to add: on 'end'{delete reactions};
 
   }
 
