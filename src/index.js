@@ -5,6 +5,7 @@ import config from './config.js'
 import log from './log'
 import {join} from 'path'
 import MongoUtil from './utils/MongoUtils'
+import ErrorMessage from './commands/utils/ErrorMessage.js'
 
 const mongoUtil = new MongoUtil('Guilds');
 //mongoUtil.initialize();

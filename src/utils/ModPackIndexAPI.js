@@ -9,6 +9,11 @@ import log from '../log'
     This needs to be changed to only return the data of the response body, &
     MPBotUtils updated to reflect those changes
 
+    11/16 checking in - may not be entirely dumb. Useful for snagging date-headers,
+    gives a nice way to do written-cache validation (when the bot startsup from cold/dark)
+    This is, after all, literally just a way to access the API. I can do it however
+    the damn hell i please.
+
 */
 
 export default class ModPackIndex {

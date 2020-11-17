@@ -1,5 +1,5 @@
 import log from '../log'
-import fs from 'fs'
+import fs from 'fs.promises'
 import cliProgress from 'cli-progress'
 import * as util from 'util'
 import NodeCache from "node-cache";
@@ -32,7 +32,7 @@ export default class Utils {
    }
 
   /**
-   * async modsCache - Returns a singular *cached* array of all the objects from an MPI API request
+   * async modsCache - Returns a singular *cached* array of all the page objects from an MPI API request
    *
    * @param  {number} pageSize number of objects to be returned on a page (Max 100, per API restrictoins)
    * @return {NodeCache}    a NodeCache object which contains each individual page object from the MPI API
@@ -40,26 +40,56 @@ export default class Utils {
   async getModsCache(pageSize){
     //If cache is expired - generate new cache.
     if((modsCache.getStats().keys == 0)){
-      log.info('MPBotUtils#getModsCache -> Quering API for new cache');
-      let lastPage = await modpackIndexAPI.getMods(pageSize, 1);
-      lastPage = lastPage.meta.last_page;
-      log.info('MPBotUtils#getModsCache -> Last API Request Page: ', lastPage);
-      //add each individual page response to cache
-      const bar1 = new cliProgress.SingleBar({
-        format: 'Mod Cacheing Progress |' + ('{bar}') + '| {percentage}% || {value}/{total} Mods || Eta: {eta}s',
-        barCompleteChar: '\u2588',
-      });
-      bar1.start(lastPage, 0);
-      for(let pageNumber = 1; pageNumber <= 23; pageNumber++){
-        let modsObject = await modpackIndexAPI.getMods(pageSize, pageNumber);
-        modsCache.set(pageNumber, modsObject);
-        bar1.increment();
 
+
+      //if cache file is populated, read from it
+      const cacheFileRaw = await fs.readFile(__dirname+'/mods.cache', 'utf8');
+      //if the cacheFile parses, we'll use it- if not, screw it & move onto API Querying
+      let cacheExists = false;
+      try {
+        JSON.parse(cacheFileRaw);
+        cacheExists = true;
+      } catch (e) {cacheExists = false;}
+      //true = cache file didn't error out, lets use it & get outa here
+      if(cacheExists){
+        const cacheFileJSON = JSON.parse(cacheFileRaw);
+        //Toss every page entry from mods.cache into a nodecache.
+        for(let pageNumber = 1; pageNumber <= cacheFileJSON.length; pagenumber++){
+          const modsObject = cacheFileJSON[pagenumber-1];
+          modsCache.set(pageNumber, modsObject);
+        }
+        //clear out mods.cache - we'll need a new one before long.
+        fs.writeFile(__dirname+'/mods.cache', '');
       }
-      bar1.stop();
-      //Info Logging - If the cache is not expected size, log error
-      if (modsCache.getStats().keys != lastPage){
-        log.error('MPBotUtils#getModsCache -> API Caching Failed.');
+
+      //otherwise, Query API, store all to active cache & then write to
+      else{
+
+
+        log.info('MPBotUtils#getModsCache -> Quering API for new cache');
+        let lastPage = await modpackIndexAPI.getMods(pageSize, 1);
+        lastPage = lastPage.meta.last_page;
+        log.info('MPBotUtils#getModsCache -> Last API Request Page: ', lastPage);
+        //add each individual page response to cache
+        const bar1 = new cliProgress.SingleBar({
+          format: 'Mod Cacheing Progress |' + ('{bar}') + '| {percentage}% || {value}/{total} Mods || Eta: {eta}s',
+          barCompleteChar: '\u2588',
+        });
+        bar1.start(lastPage, 0);
+
+        //for every page, add it to the cache & to the fileCache array
+        const fileCacheArray = new Array;
+        for(let pageNumber = 1; pageNumber <= 23; pageNumber++){
+          let modsObject = await modpackIndexAPI.getMods(pageSize, pageNumber);
+          modsCache.set(pageNumber, modsObject);
+          fileCacheArray[pagenumber-1] = modsObject;
+          bar1.increment();
+
+        }
+        const fileCacheString = JSON.stringify(fileCacheArray);
+        fs.writeFile(__dirname+'/mods.cache', fileCacheString);
+
+        bar1.stop();
       }
     }
     return modsCache;
