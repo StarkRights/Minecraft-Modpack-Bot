@@ -2,14 +2,52 @@ import log from '../log'
 import fs from 'fs.promises'
 import cliProgress from 'cli-progress'
 import * as util from 'util'
-import NodeCache from "node-cache";
+import NodeCache from "node-cache"
+import {Error} from '../commands/utils/ErrorMessage.js'
 const modsCache = new NodeCache({stdTTL:60*60*1, deleteOnExpire:false});
 const packsCache = new NodeCache({stdTTL:60*60*1, deleteOnExpire:false});
+//This should be a config option.
+const modsCacheFile = (__dirname+'/mods.cache');
+const packsCacheFile = (__dirname+'/packs.cache');
 import MPI from '../utils/ModPackIndexAPI.js'
 const modpackIndexAPI = new MPI;
 
   //letter from the editor:
   //Bars don't work properly, could be fixed, not important at the moment though.
+
+
+//Utility functions that don't really need their own module
+
+
+/**
+ * importDiskCache - Takes data from an existing disk cache & imports it to the bots memory NodeCache
+ *
+ * @param  {string} cacheFile string filepath to the disk cache file
+ * @return {object}           a JSON Parsed object of the cache contents.
+ */
+async function importDiskCache(cacheFile){
+
+  //                                      Replace w/ cFile
+  const cacheFileRaw = await fs.readFile(__dirname+'/mods.cache', 'utf8');
+  //if the cacheFile parses, we'll use it- if not, error
+  try {
+    const cacheFileJson = JSON.parse(cacheFileRaw);
+    if(cacheFileJson == {}){
+      throw error;
+    }
+  }
+  catch (e) {
+    log.error('we caught the error');
+    throw e
+  }
+  //cache file didn't error out, ship it & cli- I mean return the parsed data.
+  const cacheFileJSON = JSON.parse(cacheFileRaw);
+  return cacheFileJSON;
+}
+
+async function writeDiskCache(){
+
+}
 
 export default class Utils {
 
@@ -41,63 +79,68 @@ export default class Utils {
     //If cache is expired - generate new cache.
     if((modsCache.getStats().keys == 0)){
 
-
-      //if cache file is populated, read from it
-      const cacheFileRaw = await fs.readFile(__dirname+'/mods.cache', 'utf8');
-      //if the cacheFile parses, we'll use it- if not, screw it & move onto API Querying
-      let cacheExists = false;
-      try {
-        JSON.parse(cacheFileRaw);
-        cacheExists = true;
-      } catch (e) {cacheExists = false;}
-      //true = cache file didn't error out, lets use it & get outa here
-      if(cacheExists){
-        const cacheFileJSON = JSON.parse(cacheFileRaw);
-        //Toss every page entry from mods.cache into a nodecache.
-        for(let pageNumber = 1; pageNumber <= cacheFileJSON.length; pagenumber++){
-          const modsObject = cacheFileJSON[pagenumber-1];
-          modsCache.set(pageNumber, modsObject);
-        }
-        //clear out mods.cache - we'll need a new one before long.
-        fs.writeFile(__dirname+'/mods.cache', '');
-      }
-
-      //otherwise, Query API, store all to active cache & then write to
-      else{
-
-
-        log.info('MPBotUtils#getModsCache -> Quering API for new cache');
-        let lastPage = await modpackIndexAPI.getMods(pageSize, 1);
-        lastPage = lastPage.meta.last_page;
-        log.info('MPBotUtils#getModsCache -> Last API Request Page: ', lastPage);
-        //add each individual page response to cache
-        const bar1 = new cliProgress.SingleBar({
-          format: 'Mod Cacheing Progress |' + ('{bar}') + '| {percentage}% || {value}/{total} Mods || Eta: {eta}s',
-          barCompleteChar: '\u2588',
+      //try to import from disk cache. return if successful
+      try{
+        const cacheObject = importDiskCache(modsCacheFile);
+        cacheObject.forEach((modObject, i) => {
+          const pageNumber = i+1;
+          modsCache.set(pageNumber, modObject);
         });
-        bar1.start(lastPage, 0);
+        return modsCache;
+      } catch(e){
+        log.warn("MPBotUtils#importDiskCache -> Import of existing cached failed");
 
-        //for every page, add it to the cache & to the fileCache array
-        const fileCacheArray = new Array;
-        for(let pageNumber = 1; pageNumber <= 23; pageNumber++){
-          let modsObject = await modpackIndexAPI.getMods(pageSize, pageNumber);
-          modsCache.set(pageNumber, modsObject);
-          fileCacheArray[pagenumber-1] = modsObject;
-          bar1.increment();
-
-        }
-        const fileCacheString = JSON.stringify(fileCacheArray);
-        fs.writeFile(__dirname+'/mods.cache', fileCacheString);
-
-        bar1.stop();
       }
+      //if we didn't return earlier, something's wrong, so fallback to API Queries.
+
+      log.info('MPBotUtils#getModsCache -> Quering API for new cache');
+      let lastPage = await modpackIndexAPI.getMods(pageSize, 1);
+      lastPage = lastPage.meta.last_page;
+      log.info('MPBotUtils#getModsCache -> Last API Request Page: ', lastPage);
+      const bar1 = new cliProgress.SingleBar({
+        format: 'Mod Cacheing Progress |' + ('{bar}') + '| {percentage}% || {value}/{total} Mods || Eta: {eta}s',
+        barCompleteChar: '\u2588',
+      });
+      bar1.start(lastPage, 0);
+
+      //for every page, add it to the memory cache & to the fileCache array
+      const fileCacheArray = new Array;
+      for(let pageNumber = 1; pageNumber <= 23; pageNumber++){
+        let modsObject = await modpackIndexAPI.getMods(pageSize, pageNumber);
+        modsCache.set(pageNumber, modsObject);
+        fileCacheArray[pageNumber-1] = modsObject;
+        bar1.increment();
+
+      }
+      //write to disk cache
+      const fileCacheString = JSON.stringify(fileCacheArray);
+      fs.writeFile(__dirname+'/mods.cache', fileCacheString);
+      bar1.stop();
     }
     return modsCache;
   }
 
   async getPacksCache(pageSize){
     try{
-        if(packsCache.getStats().keys == 0){
+      /*  Need to implement disk cacheing here as well. We're rewriting code here though...
+       * time to outsource to another module? Or at least, outsource to a private func?
+      */
+      if(packsCache.getStats().keys == 0){
+        try{
+          const cacheObject = await importDiskCache(packsCacheFile);
+          cacheObject.forEach((packObject, i) => {
+            const pageNumber = i+1;
+            packsCache.set(pageNumber, packObject);
+          });
+          return packsCache;
+        } catch(e){
+          log.warn("MPBotUtils#importDiskCache -> Import of existing cached failed");
+
+        }
+
+
+
+
         let lastPage = await modpackIndexAPI.getPacks(pageSize, 1);
         lastPage = lastPage.meta.last_page;
 
@@ -106,13 +149,17 @@ export default class Utils {
           barCompleteChar: '\u2588',
         });
         bar2.start(lastPage, 0);
-
+        let fileCacheArray = new Array;
         for (let pageNumber = 1; pageNumber <= 23; pageNumber++){
           let packsObject = await modpackIndexAPI.getPacks(pageSize, pageNumber);
+          fileCacheArray[pageNumber-1] = packsObject;
           packsCache.set(pageNumber, packsObject);
           bar2.increment();
         }
         bar2.stop();
+        const fileCacheString = JSON.stringify(fileCacheArray);
+        fs.writeFile(__dirname+'/packs.cache', fileCacheString);
+
       }
     } catch(e) {
       log.error(`WhateverThe Fuck ThE Error Is-> ${e}`);

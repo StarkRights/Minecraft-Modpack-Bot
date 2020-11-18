@@ -5,7 +5,7 @@ import config from './config.js'
 import log from './log'
 import {join} from 'path'
 import MongoUtil from './utils/MongoUtils'
-import ErrorMessage from './commands/utils/ErrorMessage.js'
+import {ErrorMessage} from './commands/utils/ErrorMessage.js'
 
 const mongoUtil = new MongoUtil('Guilds');
 //mongoUtil.initialize();
@@ -60,8 +60,8 @@ client.on('message', async (message) => {
 		// 3) Owner DM Logging
 
 		log.error(`Client#commandExecutionError -> ${error}`);
-		//this needs to go away: migrate to ErrorMessage: await message.reply('There was an error trying to execute the command.');
-		const errorMessage = new ErrorMesage(message, error, type, details);
+		//this needs to go away: migrate to ErrorMessage:
+		const errorMessage = new ErrorMessage(error);
 
 		await ownerObject.send(`An uncaught error was encountered. |Guild: \'${message.guild.name}\'<${message.guild.id}>|Message: \'${message.id}\'\nConsole Error: \`Client#commandExecutionError -> ${error}\``);
 	}
