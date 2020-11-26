@@ -12,6 +12,8 @@ module.exports = {
   name: 'packinfo',
   description:'details info of a specified pack id',
   async execute(message, args){
+    const infoMessage = new InfoMessage(message, args);
+    infoMessage.sendLoadingMessage();
     const packID = args[0];
     //check if packID is valid
 
@@ -25,16 +27,17 @@ module.exports = {
       const nextObjID = nextObj.id;
       if(nextObjID == packID){
         isValid = true;
-        packObj = await mpiAPI.getPack(packID).data;
+        packObj = await mpiAPI.getPack(packID);
+        packObj = packObj.data;
       }
     }
+    packObj.link = `http://modpackindex.com/modpack/${packID}`;
+
 
     if(!isValid){
       message.channel.send(`Error: \`Invalid mod id\``);
     }
     else{
-      const infoMessage = new InfoMessage(message, args);
-      if(await infoMessage.sendLoadingMessage() == -1){return;}
       infoMessage.sendInfo(packsArray, packObj);
     }
   }

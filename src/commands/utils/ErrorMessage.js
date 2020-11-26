@@ -1,8 +1,9 @@
 import {MessageEmbed} from 'discord.js'
+import log from '../../log'
 
 /**
  *  A simple class to standardize end-user error messages across the bot.
- * 
+ *
  *  Whenever an error *could* be encountered, a new Error object is created,
  *  and subsequently thrown up until it's relevant to catch it. At the relevant
  *  stage, the error is caught, and sent through a new ErrorMessag
@@ -38,7 +39,19 @@ export class ErrorMessage{
       .setTimestamp();
       //todo: accept custom fields & iterate them into embed
       //for(let i = 0; )
-    this.userMessage.channel.send(errorEmbed);
+
+    //send the Console error
+
+    //send the User Error
+    try{
+      this.userMessage.channel.send(errorEmbed);
+    }catch(e){
+      log.error(`Client#commandExecutionError -> ${e}`)
+    }
+    //send the Owner Error
+
+    //Send to mongo
+
   }
 }
 
