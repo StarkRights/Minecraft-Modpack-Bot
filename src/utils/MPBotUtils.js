@@ -38,6 +38,39 @@ async function importDiskCache(cacheFile){
 }
 
 
+/**
+ * getAPICache - Returns an array of MPIAPI pages
+ *
+ * @param  {string} type 'mod'or 'pack'
+ * @return {type}      description
+ */
+async function getAPICache(type){
+  let apiFunction;
+  if(type!='mods' && type!='packs')
+  if(type == 'mods'){apiFunction = (pageSize, page)=>{return modpackIndexAPI.getMods(pageSize, page)};}
+  if(type == 'packs'){apiFunction = (pageSize, page)=>{return modpackIndexAPI.getPacks(pageSize, page)};}
+
+  log.info(`MPBotUtils#get${type}ModsCache -> Querying API for new cache`);
+  let lastPage = await apiFunction(pageSize, 1);
+  lastPage = lastPage.meta.last_page;
+  log.info(`MPBotUtils#get${type}Cache -> Last API Request Page: `, lastPage);
+  const progressBar = multibar.create(lastPage, 0);
+
+  //for every page, add it to the memory cache & to the fileCache array
+  const fileCacheArray = new Array;
+  for(let pageNumber = 1; pageNumber <= lastPage; pageNumber++){
+    let pageObject = await apiFunction(pageSize, pageNumber);
+    modsCache.set(pageNumber, pageObject);
+    fileCacheArray[pageNumber-1] = pageObject;
+    progressBar.increment();
+  }
+  //write to disk cache
+  const fileCacheString = JSON.stringify(fileCacheArray);
+  fs.writeFile(__dirname+'/mods.cache', fileCacheString);
+  multibar.remove(progressBar);
+}
+
+
 
 /*
   Need to clean up this code. A large amount is written twice for no reason.
