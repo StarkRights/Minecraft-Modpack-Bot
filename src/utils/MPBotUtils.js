@@ -17,61 +17,6 @@ const multibar = new cliProgress.MultiBar({
 
 }, cliProgress.Presets.shades_grey);
 
-
-/**
- * importDiskCache - Takes data from an existing disk cache & imports it to the bots memory NodeCache
- *
- * @param  {string} cacheFile string filepath to the disk cache file
- * @return {object}           a JSON Parsed object of the cache contents.
- */
-async function importDiskCache(cacheFile){
-  const cacheFileRaw = await fs.readFile(cacheFile, 'utf8');
-  //if the cacheFile parses, we'll use it- if not, error
-  const cacheFileJson = JSON.parse(cacheFileRaw);
-  if(cacheFileJson == {}){throw 'Cache File Empty';}
-  //else statements here should also throw if it's < than a reasonable amount of pages.
-
-
-  //cache file didn't error out, ship it & cli- I mean return the parsed data.
-  const cacheFileJSON = JSON.parse(cacheFileRaw);
-  return cacheFileJSON;
-}
-
-
-/**
- * getAPICache - Returns an array of MPIAPI pages
- *
- * @param  {string} type 'mod'or 'pack'
- * @return {type}      description
- */
-async function getAPICache(type){
-  let apiFunction;
-  if(type!='mods' && type!='packs')
-  if(type == 'mods'){apiFunction = (pageSize, page)=>{return modpackIndexAPI.getMods(pageSize, page)};}
-  if(type == 'packs'){apiFunction = (pageSize, page)=>{return modpackIndexAPI.getPacks(pageSize, page)};}
-
-  log.info(`MPBotUtils#get${type}ModsCache -> Querying API for new cache`);
-  let lastPage = await apiFunction(pageSize, 1);
-  lastPage = lastPage.meta.last_page;
-  log.info(`MPBotUtils#get${type}Cache -> Last API Request Page: `, lastPage);
-  const progressBar = multibar.create(lastPage, 0);
-
-  //for every page, add it to the memory cache & to the fileCache array
-  const fileCacheArray = new Array;
-  for(let pageNumber = 1; pageNumber <= lastPage; pageNumber++){
-    let pageObject = await apiFunction(pageSize, pageNumber);
-    modsCache.set(pageNumber, pageObject);
-    fileCacheArray[pageNumber-1] = pageObject;
-    progressBar.increment();
-  }
-  //write to disk cache
-  const fileCacheString = JSON.stringify(fileCacheArray);
-  fs.writeFile(__dirname+'/mods.cache', fileCacheString);
-  multibar.remove(progressBar);
-}
-
-
-
 /*
   Need to clean up this code. A large amount is written twice for no reason.
   Only reason i'm not doing it now is because I don't want to think about how
@@ -98,7 +43,49 @@ export default class Utils {
       //debug: console.log('modsArray', modsArray);
       return cacheArray;
    }
+   async getCache(cacheType, pageSize){
+     //set cache environment
+     let nodeCache;
+     let cacheFile;
+     if((cacheType != 'pack') && (cacheType != 'mod')){throw ''}
+     if(cacheType == 'pack'){
+       nodeCache = packsCache;
+       cacheFile = packsCacheFile;
+     }
+     if(cacheType == 'mod'){
+       nodecache = modsCache;
+       cacheFile = modsCacheFile;
+     }
 
+     //*if given cache is out of keys, generate a new cache
+     if(nodeCache.getStats().keys == 0){
+       //**if firsttime start, import from disk
+       if(cacheCycle == 0){
+         try{
+           const cacheObject = await importDiskCache(cacheFile);
+           cacheObject.forEach((pageObject, i) => {
+             const pageNumber = i+1;
+             nodeCache.set(pageNumber, pageObject);
+           });
+           const importedNumber = cacheObject.length;
+           log.info(`MPBotUtils#import${cacheType}DiskCache -> Import of existing cache Successful: Imported ${importedNumber} ${cacheType} pages`);
+           return nodeCache;
+         } catch(e) {
+           log.warn(`MPBotUtils#import${cacheType}DiskCache -> Import of existing cache failed | Details: ${e}`);
+         }
+       }
+       //**else, start API cacheing
+       else{
+         const returnCache = getAPICache(cacheType);
+           return returnCache;
+         }
+       }
+
+     //*Else, return the cache
+     else {
+       return nodeCache;
+     }
+   }
   /**
    * async modsCache - Returns a singular *cached* array of all the page objects from an MPI API request
    *
@@ -122,26 +109,12 @@ export default class Utils {
       } catch(e){
         log.warn(`MPBotUtils#importModDiskCache -> Import of existing cache failed | Details: ${e}`);
       }
-      //if we didn't return earlier, something's wrong, so fallback to API Queries.
 
-      log.info('MPBotUtils#getModsCache -> Querying API for new cache');
-      let lastPage = await modpackIndexAPI.getMods(pageSize, 1);
-      lastPage = lastPage.meta.last_page;
-      log.info('MPBotUtils#getModsCache -> Last API Request Page: ', lastPage);
-      const progressBar = multibar.create(lastPage, 0);
 
-      //for every page, add it to the memory cache & to the fileCache array
-      const fileCacheArray = new Array;
-      for(let pageNumber = 1; pageNumber <= lastPage; pageNumber++){
-        let modsObject = await modpackIndexAPI.getMods(pageSize, pageNumber);
-        modsCache.set(pageNumber, modsObject);
-        fileCacheArray[pageNumber-1] = modsObject;
-        progressBar.increment();
-      }
-      //write to disk cache
-      const fileCacheString = JSON.stringify(fileCacheArray);
-      fs.writeFile(__dirname+'/mods.cache', fileCacheString);
-      multibar.remove(progressBar);
+
+
+
+
     }
     return modsCache;
   }
@@ -166,22 +139,93 @@ export default class Utils {
 
 
 
-      log.info('MPBotUtils#getModsCache -> Querying API for new cache');
-      let lastPage = await modpackIndexAPI.getPacks(pageSize, 1);
-      lastPage = lastPage.meta.last_page;
-      const progressBar = multibar.create(lastPage, 0);
-      let fileCacheArray = new Array;
-      for (let pageNumber = 1; pageNumber <= lastPage; pageNumber++){
-        let packsObject = await modpackIndexAPI.getPacks(pageSize, pageNumber);
-        fileCacheArray[pageNumber-1] = packsObject;
-        packsCache.set(pageNumber, packsObject);
-        progressBar.increment();
-      }
-      multibar.remove(progressBar);
-      const fileCacheString = JSON.stringify(fileCacheArray);
-      fs.writeFile(__dirname+'/packs.cache', fileCacheString);
+
 
     }
     return packsCache;
   }
+}
+
+
+
+
+/**
+ * importDiskCache - Takes data from an existing disk cache & imports it to the bots memory NodeCache
+ *
+ * @param  {string} cacheFile string type of cache requested
+ * @return {object}           a JSON Parsed object of the cache contents.
+ */
+async function importDiskCache(cacheType){
+  let nodeCache;
+  let cacheFile;
+  if((cacheType != 'pack') && (cacheType != 'mod')){throw ''}
+  if(cacheType == 'pack'){
+    nodeCache = packsCache;
+    cacheFile = packsCacheFile;
+  }
+  if(cacheType == 'mod'){
+    nodecache = modsCache;
+    cacheFile = modsCacheFile;
+  }
+  const cacheFileRaw = await fs.readFile(cacheFile, 'utf8');
+  //if the cacheFile parses, we'll use it- if not, error
+  const cacheFileJson = JSON.parse(cacheFileRaw);
+  if(cacheFileJson == {}){throw 'Cache File Empty';}
+  //else statements here should also throw if it's < than a reasonable amount of pages.
+
+
+  //cache file didn't error out, ship it & cli- I mean return the parsed data.
+  const cacheObject = JSON.parse(cacheFileRaw);
+
+  cacheObject.forEach((pageObject, i) => {
+    const pageNumber = i+1;
+    nodeCache.set(pageNumber, pageObject);
+  });
+  const importedNumber = cacheObject.length;
+  return nodeCache;
+}
+
+
+/**
+ * getAPICache - Returns the populated nodecache of a specified type
+ *
+ * @param  {string} type 'mod'or 'pack'
+ * @return {nodeCache}      the relevant nodecache
+ */
+async function getAPICache(type){
+  let apiFunction;
+  let physicalCacheDir;
+  let nodeCache;
+  if(type!='mods' && type!='packs'){exit code}
+  if(type == 'mods'){
+    apiFunction = (pageSize, page)=>{return modpackIndexAPI.getMods(pageSize, page)};
+    physicalCacheDir = modsCacheFile;
+    nodeCache = modsCache;
+  }
+  if(type == 'packs'){
+    apiFunction = (pageSize, page)=>{return modpackIndexAPI.getPacks(pageSize, page)};
+    physicalCacheDir = packsCacheFile;
+    nodeCache = packsCache;
+  }
+
+  log.info(`MPBotUtils#get${type}ModsCache -> Querying API for new cache`);
+  let lastPage = await apiFunction(pageSize, 1);
+  lastPage = lastPage.meta.last_page;
+  log.info(`MPBotUtils#get${type}Cache -> Last API Request Page: `, lastPage);
+  const progressBar = multibar.create(lastPage, 0);
+
+  //for every page, add it to the memory cache & to the fileCache array
+  const fileCacheArray = new Array;
+  for(let pageNumber = 1; pageNumber <= lastPage; pageNumber++){
+    let pageObject = await apiFunction(pageSize, pageNumber);
+    nodeCache.set(pageNumber, pageObject);
+    fileCacheArray[pageNumber-1] = pageObject;
+    progressBar.increment();
+  }
+  //write to disk cache
+  const fileCacheString = JSON.stringify(fileCacheArray);
+  fs.writeFile(physicalCacheDir, fileCacheString);
+  multibar.remove(progressBar);
+
+  return nodeCache;
 }
