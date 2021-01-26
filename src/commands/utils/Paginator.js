@@ -12,11 +12,14 @@ export default class Paginator{
   paginate(embed, pageNumber){
     let paginatedEmbed = embed;
     for(let i = 0; i <= 9; i++){
-      if(i == this.dataArray.length){
+
+      //if we're about to OOB Exception, kill it.
+      const modNumber = (i)+(10*(pageNumber));
+      if(modNumber == this.dataArray.length){
         break;
       }
 
-      const modNumber = (i)+(10*(pageNumber));
+      //otherwise, paginate.
       const modName = this.dataArray[modNumber].name;
       const modID = this.dataArray[modNumber].id;
       const modSummary = this.dataArray[modNumber].summary;

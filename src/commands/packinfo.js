@@ -17,7 +17,7 @@ module.exports = {
     const packID = args[0];
     //check if packID is valid
 
-    const packsCache = await utils.getPacksCache(100);
+    const packsCache = await utils.getCache('Packs',100);
     const packsArray = await utils.cacheArrayifier(packsCache);
 
     let isValid = false;

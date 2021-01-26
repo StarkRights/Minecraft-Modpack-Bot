@@ -18,7 +18,7 @@ module.exports = {
     const modID = args[0];
     //check if modID is valid
 
-    const modsCache = await utils.getModsCache(100);
+    const modsCache = await utils.getCache('Mods',100);
     const modsArray = await utils.cacheArrayifier(modsCache);
 
     let isValid = false;

@@ -22,8 +22,14 @@ const multibar = new cliProgress.MultiBar({
   Only reason i'm not doing it now is because I don't want to think about how
   to dynamicaly change from MPI.getmods to .getpacks in a generic function.
   -Stark 11/22/20
+
+  That was stupid easy. Idiot. Code is still a bit tall, but better than it was.
+  API Calls refactored.
+  -Stark 1/7/21
 */
 
+//temp. future stark, write actual code for determining startup state.
+let cacheCycle = 0;
 export default class Utils {
 
   /**
@@ -34,8 +40,8 @@ export default class Utils {
    */
   async cacheArrayifier(cache){
       let cacheArray = new Array();
-      const cacheKeys = cache.keys();
-      for(let i = 1; (i-1) < cacheKeys.length; i++){
+      const cacheKeys = cache.getStats().keys;
+      for(let i = 1; (i-1) < cacheKeys; i++){
         let pageNumber = i;
         let nextObject = await cache.get(pageNumber);
         cacheArray = cacheArray.concat(Array.from(nextObject.data));
@@ -47,13 +53,13 @@ export default class Utils {
      //set cache environment
      let nodeCache;
      let cacheFile;
-     if((cacheType != 'pack') && (cacheType != 'mod')){throw ''}
+     if((cacheType != 'pack') && (cacheType != 'mod')){throw 'Invalid cache type.'}
      if(cacheType == 'pack'){
        nodeCache = packsCache;
        cacheFile = packsCacheFile;
      }
      if(cacheType == 'mod'){
-       nodecache = modsCache;
+       nodeCache = modsCache;
        cacheFile = modsCacheFile;
      }
 
@@ -62,88 +68,26 @@ export default class Utils {
        //**if firsttime start, import from disk
        if(cacheCycle == 0){
          try{
-           const cacheObject = await importDiskCache(cacheFile);
-           cacheObject.forEach((pageObject, i) => {
-             const pageNumber = i+1;
-             nodeCache.set(pageNumber, pageObject);
-           });
-           const importedNumber = cacheObject.length;
-           log.info(`MPBotUtils#import${cacheType}DiskCache -> Import of existing cache Successful: Imported ${importedNumber} ${cacheType} pages`);
-           return nodeCache;
+           //returns nodecache
+           const cacheObject = await importDiskCache(cacheType);
+           //, log stats & ship it out
+           const importedNumber = cacheObject.getStats().keys;
+           log.info(`MPBotUtils#get${cacheType}Cache -> Import of existing cache Successful: Imported ${importedNumber} ${cacheType} pages`);
+           return cacheObject;
          } catch(e) {
-           log.warn(`MPBotUtils#import${cacheType}DiskCache -> Import of existing cache failed | Details: ${e}`);
+           log.warn(`MPBotUtils#get${cacheType}Cache -> Import of existing cache failed | Details: ${e}`);
          }
        }
-       //**else, start API cacheing
-       else{
-         const returnCache = getAPICache(cacheType);
-           return returnCache;
-         }
-       }
+       //If we didn't return earlier, we need to continue and APICache
+       const returnCache = getAPICache(cacheType, 100);
+       return returnCache;
+     }
 
-     //*Else, return the cache
+     //*Else, if the cache does preexist, return the cache
      else {
        return nodeCache;
      }
    }
-  /**
-   * async modsCache - Returns a singular *cached* array of all the page objects from an MPI API request
-   *
-   * @param  {number} pageSize number of objects to be returned on a page (Max 100, per API restrictoins)
-   * @return {NodeCache}    a NodeCache object which contains each individual page object from the MPI API
-   */
-  async getModsCache(pageSize){
-    //If cache is expired - generate new cache.
-    if((modsCache.getStats().keys == 0)){
-
-      //try to import from disk cache. return if successful
-      try{
-        const cacheObject = await importDiskCache(modsCacheFile);
-        cacheObject.forEach((modObject, i) => {
-          const pageNumber = i+1;
-          modsCache.set(pageNumber, modObject);
-        });
-        const importedNumber = cacheObject.length;
-        log.info(`MPBotUtils#importModDiskCache -> Import of existing cache Successful: Imported ${importedNumber} mod pages`);
-        return modsCache;
-      } catch(e){
-        log.warn(`MPBotUtils#importModDiskCache -> Import of existing cache failed | Details: ${e}`);
-      }
-
-
-
-
-
-
-    }
-    return modsCache;
-  }
-
-  async getPacksCache(pageSize){
-    /*  Need to implement disk cacheing here as well. We're rewriting code here though...
-     * time to outsource to another module? Or at least, outsource to a private func?
-    */
-    if(packsCache.getStats().keys == 0){
-      try{
-        const cacheObject = await importDiskCache(packsCacheFile);
-        cacheObject.forEach((packObject, i) => {
-          const pageNumber = i+1;
-          packsCache.set(pageNumber, packObject);
-        });
-        const importedNumber = cacheObject.length;
-        log.info(`MPBotUtils#importPackDiskCache -> Import of existing cache Successful: Imported ${importedNumber} pack pages`);
-        return packsCache;
-      } catch(e){
-        log.warn(`MPBotUtils#importPackDiskCache -> Import of existing cache failed | Details: ${e}`);
-      }
-
-
-
-
-
-    }
-    return packsCache;
-  }
 }
 
 
@@ -158,13 +102,13 @@ export default class Utils {
 async function importDiskCache(cacheType){
   let nodeCache;
   let cacheFile;
-  if((cacheType != 'pack') && (cacheType != 'mod')){throw ''}
+  if((cacheType != 'pack') && (cacheType != 'mod')){throw 'Invalid cache type.'}
   if(cacheType == 'pack'){
     nodeCache = packsCache;
     cacheFile = packsCacheFile;
   }
   if(cacheType == 'mod'){
-    nodecache = modsCache;
+    nodeCache = modsCache;
     cacheFile = modsCacheFile;
   }
   const cacheFileRaw = await fs.readFile(cacheFile, 'utf8');
@@ -192,17 +136,17 @@ async function importDiskCache(cacheType){
  * @param  {string} type 'mod'or 'pack'
  * @return {nodeCache}      the relevant nodecache
  */
-async function getAPICache(type){
+async function getAPICache(type, pageSize){
   let apiFunction;
   let physicalCacheDir;
   let nodeCache;
-  if(type!='mods' && type!='packs'){exit code}
-  if(type == 'mods'){
+  if(type!='mod' && type!='pack'){throw 'Invalid cache type.'}
+  if(type == 'mod'){
     apiFunction = (pageSize, page)=>{return modpackIndexAPI.getMods(pageSize, page)};
     physicalCacheDir = modsCacheFile;
     nodeCache = modsCache;
   }
-  if(type == 'packs'){
+  if(type == 'pack'){
     apiFunction = (pageSize, page)=>{return modpackIndexAPI.getPacks(pageSize, page)};
     physicalCacheDir = packsCacheFile;
     nodeCache = packsCache;
