@@ -28,7 +28,9 @@ const multibar = new cliProgress.MultiBar({
   -Stark 1/7/21
 */
 
-//temp. future stark, write actual code for determining startup state.
+//temp. future stark, write actual code for determining startup state
+// Move initialization to seperate funtion, for index.js to call on startup. because
+// it's a startupt function. duh.
 let cacheCycle = 0;
 export default class Utils {
 
