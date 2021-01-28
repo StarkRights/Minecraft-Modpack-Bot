@@ -23,7 +23,7 @@ module.exports = {
     if(await searchMessage.sendLoadingMessage() == -1){return;}
 
     //Retrieve mod data from API Request cache.
-    const modsCache = await utils.getCache('mod',100);
+    const modsCache = await utils.getCache('mod');
     const modsArray = await utils.cacheArrayifier(modsCache);
 
     //Search the modsArray for the user's query, then sort the searched set

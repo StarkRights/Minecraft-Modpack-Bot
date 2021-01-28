@@ -5,6 +5,7 @@ import config from './config.js'
 import log from './log'
 import {join} from 'path'
 import MongoUtil from './utils/MongoUtils'
+import util from './utils/MPBotUtils'
 import {ErrorMessage} from './commands/utils/ErrorMessage.js'
 
 const mongoUtil = new MongoUtil('Guilds');
@@ -24,8 +25,15 @@ async function ownerInit(){
 		const formattedDate = `[${date.toISOString()}]`;
 		owner.send(`${formattedDate}ModPackIndexBot#Ready -> ready`);
 		ownerObject = owner;
-	} catch(e){ log.error(`OwnerInit#initializeFailure -> ${e}`);}
+	} catch(e){ log.error(`OwnerInit#initializeFailure -> ${e}`); }
 
+}
+
+async function cacheInit(){
+	try{
+		util.initialize();
+	} //this should never error, it's try-catched in util.initialize, but if it does... 
+	catch(e){ log.error(`CacheInit#initializeFailure -> ${e}`); }
 }
 
 const commandFiles = readdirSync(join(__dirname, 'commands')).filter(file => file.endsWith('.js'));
@@ -37,6 +45,7 @@ for (const file of commandFiles) {
 client.once('ready', () => {
 	log.info('Client#Ready -> ready...');
 	ownerInit();
+
 });
 
 client.on('message', async (message) => {

@@ -51,7 +51,15 @@ export default class Utils {
       //debug: console.log('modsArray', modsArray);
       return cacheArray;
    }
-   async getCache(cacheType, pageSize){
+
+
+   /**
+    * async getCache - Returns the active nodecache of the relative type
+    *
+    * @param  {type} cacheType 'pack' or 'mod'
+    * @return {type}           description
+    */
+   async getCache(cacheType){
      //set cache environment
      let nodeCache;
      let cacheFile;
@@ -65,35 +73,36 @@ export default class Utils {
        cacheFile = modsCacheFile;
      }
 
-     //*if given cache is out of keys, generate a new cache
+     //if given cache is out of keys, query for a new cache
      if(nodeCache.getStats().keys == 0){
-       //**if firsttime start, import from disk
-       if(cacheCycle == 0){
-         try{
-           //returns nodecache
-           const cacheObject = await importDiskCache(cacheType);
-           //, log stats & ship it out
-           const importedNumber = cacheObject.getStats().keys;
-           log.info(`MPBotUtils#get${cacheType}Cache -> Import of existing cache Successful: Imported ${importedNumber} ${cacheType} pages`);
-           return cacheObject;
-         } catch(e) {
-           log.warn(`MPBotUtils#get${cacheType}Cache -> Import of existing cache failed | Details: ${e}`);
-         }
-       }
-       //If we didn't return earlier, we need to continue and APICache
        const returnCache = getAPICache(cacheType, 100);
        return returnCache;
      }
 
-     //*Else, if the cache does preexist, return the cache
+     //Else, if the cache does preexist, return the cache
      else {
        return nodeCache;
      }
    }
 }
 
-
-
+/***************************************************
+ * The Following are a collection of functions     *
+ * that are core to the functionality of getCache. *
+ * Removed primarily for simplicity, & readability *
+ **************************************************/
+async function initialize(){
+  try{
+    //returns nodecache
+    const cacheObject = await importDiskCache(cacheType);
+    //, log stats & ship it out
+    const importedNumber = cacheObject.getStats().keys;
+    log.info(`MPBotUtils#initialize${cacheType}Cache -> Import of existing cache Successful: Imported ${importedNumber} ${cacheType} pages`);
+    return cacheObject;
+  } catch(e) {
+    log.warn(`MPBotUtils#initialize${cacheType}Cache -> Import of existing cache failed | Details: ${e}`);
+  }
+}
 
 /**
  * importDiskCache - Takes data from an existing disk cache & imports it to the bots memory NodeCache

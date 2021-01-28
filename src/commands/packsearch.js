@@ -23,7 +23,7 @@ module.exports = {
     if(await searchMessage.sendLoadingMessage() == -1){return;}
 
     //Retrieve pack data from API request cache.
-    const packsCache = await utils.getCache('pack',100);
+    const packsCache = await utils.getCache('pack');
     const packsArray = await utils.cacheArrayifier(packsCache);
 
     //Search packsArray for the user's query, then sort the searched set
