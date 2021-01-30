@@ -88,7 +88,7 @@ export default class Utils {
    async initialize(){
        //returns nodecache
      const caches = ['mod', 'pack'];
-     caches.forEach(cacheType => {
+     caches.forEach(async cacheType => {
        try{
          const cacheObject = await importDiskCache(cacheType);
          //, log stats & ship it out
