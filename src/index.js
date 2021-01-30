@@ -5,9 +5,10 @@ import config from './config.js'
 import log from './log'
 import {join} from 'path'
 import MongoUtil from './utils/MongoUtils'
-import util from './utils/MPBotUtils'
+import Utils from './utils/MPBotUtils'
 import {ErrorMessage} from './commands/utils/ErrorMessage.js'
 
+const util = new Utils;
 const mongoUtil = new MongoUtil('Guilds');
 //mongoUtil.initialize();
 
