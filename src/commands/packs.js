@@ -10,7 +10,7 @@ module.exports = {
   name: 'packs',
   description:'lists packs',
   async execute (message, args){
-    
+
     message.channel.send(modpacksEmbed);
 
   }
