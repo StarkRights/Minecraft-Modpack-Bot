@@ -32,7 +32,7 @@ async function ownerInit(){
 async function cacheInit(){
 	try{
 		util.initialize();
-	} //this should never error, it's try-catched in util.initialize, but if it does... 
+	} //this should never error, it's try-catched in util.initialize, but if it does...
 	catch(e){ log.error(`CacheInit#initializeFailure -> ${e}`); }
 }
 
@@ -45,6 +45,7 @@ for (const file of commandFiles) {
 client.once('ready', () => {
 	log.info('Client#Ready -> ready...');
 	ownerInit();
+	cacheInit();
 
 });
 
