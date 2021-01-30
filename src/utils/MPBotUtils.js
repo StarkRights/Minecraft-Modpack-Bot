@@ -84,6 +84,22 @@ export default class Utils {
        return nodeCache;
      }
    }
+
+   async initialize(){
+       //returns nodecache
+     const caches = ['mod', 'pack'];
+     for(cacheType in caches){
+       try{
+         const cacheObject = await importDiskCache(cacheType);
+         //, log stats & ship it out
+         const importedNumber = cacheObject.getStats().keys;
+         log.info(`MPBotUtils#initialize${cacheType}Cache -> Import of existing cache Successful: Imported ${importedNumber} ${cacheType} pages`);
+         return cacheObject;
+       } catch(e) {
+         log.warn(`MPBotUtils#initialize${cacheType}Cache -> Import of existing cache failed | Details: ${e}`);
+       }
+     }
+   }
 }
 
 /***************************************************
@@ -91,21 +107,6 @@ export default class Utils {
  * that are core to the functionality of getCache. *
  * Removed primarily for simplicity, & readability *
  **************************************************/
-async function initialize(){
-    //returns nodecache
-  const caches = ['mod', 'pack'];
-  for(cacheType in caches){
-    try{
-      const cacheObject = await importDiskCache(cacheType);
-      //, log stats & ship it out
-      const importedNumber = cacheObject.getStats().keys;
-      log.info(`MPBotUtils#initialize${cacheType}Cache -> Import of existing cache Successful: Imported ${importedNumber} ${cacheType} pages`);
-      return cacheObject;
-    } catch(e) {
-      log.warn(`MPBotUtils#initialize${cacheType}Cache -> Import of existing cache failed | Details: ${e}`);
-    }
-  }
-}
 
 /**
  * importDiskCache - Takes data from an existing disk cache & imports it to the bots memory NodeCache
