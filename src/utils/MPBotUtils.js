@@ -94,13 +94,16 @@ export default class Utils {
 async function initialize(){
   try{
     //returns nodecache
-    const cacheObject = await importDiskCache(cacheType);
-    //, log stats & ship it out
-    const importedNumber = cacheObject.getStats().keys;
-    log.info(`MPBotUtils#initialize${cacheType}Cache -> Import of existing cache Successful: Imported ${importedNumber} ${cacheType} pages`);
-    return cacheObject;
-  } catch(e) {
-    log.warn(`MPBotUtils#initialize${cacheType}Cache -> Import of existing cache failed | Details: ${e}`);
+    const caches = {'mod', 'pack'};
+    for(cacheType in caches){
+      const cacheObject = await importDiskCache(cacheType);
+      //, log stats & ship it out
+      const importedNumber = cacheObject.getStats().keys;
+      log.info(`MPBotUtils#initialize${cacheType}Cache -> Import of existing cache Successful: Imported ${importedNumber} ${cacheType} pages`);
+      return cacheObject;
+    } catch(e) {
+      log.warn(`MPBotUtils#initialize${cacheType}Cache -> Import of existing cache failed | Details: ${e}`);
+    }
   }
 }
 
