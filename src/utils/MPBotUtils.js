@@ -92,10 +92,10 @@ export default class Utils {
  * Removed primarily for simplicity, & readability *
  **************************************************/
 async function initialize(){
-  try{
     //returns nodecache
-    const caches = ['mod', 'pack'];
-    for(cacheType in caches){
+  const caches = ['mod', 'pack'];
+  for(cacheType in caches){
+    try{
       const cacheObject = await importDiskCache(cacheType);
       //, log stats & ship it out
       const importedNumber = cacheObject.getStats().keys;
