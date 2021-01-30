@@ -88,7 +88,7 @@ export default class Utils {
    async initialize(){
        //returns nodecache
      const caches = ['mod', 'pack'];
-     for(const cacheType in caches){
+     caches.forEach(cacheType => {
        try{
          const cacheObject = await importDiskCache(cacheType);
          //, log stats & ship it out
@@ -98,7 +98,7 @@ export default class Utils {
        } catch(e) {
          log.warn(`MPBotUtils#initialize${cacheType}Cache -> Import of existing cache failed | Details: ${e}`);
        }
-     }
+     });
    }
 }
 
