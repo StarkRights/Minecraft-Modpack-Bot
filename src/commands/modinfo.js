@@ -32,7 +32,7 @@ module.exports = {
         modObj = modObj.data;
       }
     }
-    modObj.link = `http://modpackindex.com/pack/${modID}`;
+    modObj.link = `http://modpackindex.com/mod/${modID}`;
 
 
     if(!isValid){
