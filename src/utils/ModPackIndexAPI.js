@@ -2,6 +2,20 @@ import fetch from 'node-fetch'
 import log from '../log'
 
 
+
+/*
+    We do some dumb stuff here. Specifically, we return the entire HTTP request
+    response body- which is stupid in and of itself.
+    This needs to be changed to only return the data of the response body, &
+    MPBotUtils updated to reflect those changes
+
+    11/16 checking in - may not be entirely dumb. Useful for snagging date-headers,
+    gives a nice way to do written-cache validation (when the bot startsup from cold/dark)
+    This is, after all, literally just a way to access the API. I can do it however
+    the damn hell i please.
+
+*/
+
 export default class ModPackIndex {
   constructor(){
     this.baseURL = 'https://www.modpackindex.com/api/v1/';
@@ -17,6 +31,12 @@ export default class ModPackIndex {
   async getPacks(limit, page){
     try {
       const response = await fetch(this.baseURL + `modpacks?limit=${limit}&page=${page}`);
+      const rateLimit = response.headers.raw()['X-RateLimit-Remaining'];
+      const retryAfter = response.headers.raw()['retry-after'];
+      if(retryAfter){
+        log.info(`Ratelimit: ${rateLimit}`);
+        log.info(`RetryAfter: ${retryAfter}`);
+      }
       return response.json();
     }
     catch(e) {
@@ -30,7 +50,7 @@ export default class ModPackIndex {
    * @param  {number} modpackId MPI ID of modpack
    * @return {object}           JSON Object of modpack details
    */
-  async getModpack(modpackId){
+  async getPack(modpackId){
     try{
       const response = await fetch(this.baseURL + `modpack/${modpackId}`);
       return response.json();
@@ -71,7 +91,12 @@ export default class ModPackIndex {
   async getMods(limit, page){
     try{
       const response = await fetch(this.baseURL + `mods?limit=${limit}&page=${page}`);
-      //console.log(await response.json());
+      const rateLimit = response.headers.raw()['X-RateLimit-Remaining'];
+      const retryAfter = response.headers.raw()['retry-after'];
+      if(retryAfter){
+        log.info(`Ratelimit: ${rateLimit}`);
+        log.info(`RetryAfter: ${retryAfter}`);
+      }
       return await response.json();
     }
     catch(e){

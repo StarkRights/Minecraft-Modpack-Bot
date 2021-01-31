@@ -5,9 +5,12 @@ import config from './config.js'
 import log from './log'
 import {join} from 'path'
 import MongoUtil from './utils/MongoUtils'
+import Utils from './utils/MPBotUtils'
+import {ErrorMessage} from './commands/utils/ErrorMessage.js'
 
+const util = new Utils;
 const mongoUtil = new MongoUtil('Guilds');
-mongoUtil.initialize();
+//mongoUtil.initialize();
 
 const token = config.token;
 const prefix = config.prefix;
@@ -15,14 +18,23 @@ const ownerID = config.ownerID
 const client = new Client();
 client.commands = new Collection();
 
+let ownerObject;
 async function ownerInit(){
 	try{
 		const owner = await client.users.fetch(ownerID, false);
 		const date = new Date();
 		const formattedDate = `[${date.toISOString()}]`;
 		owner.send(`${formattedDate}ModPackIndexBot#Ready -> ready`);
-	} catch(e){ log.error(`OwnerInit#initializeFailure -> ${e}`);}
+		ownerObject = owner;
+	} catch(e){ log.error(`OwnerInit#initializeFailure -> ${e}`); }
 
+}
+
+async function cacheInit(){
+	try{
+		util.initialize();
+	} //this should never error, it's try-catched in util.initialize, but if it does...
+	catch(e){ log.error(`CacheInit#initializeFailure -> ${e}`); }
 }
 
 const commandFiles = readdirSync(join(__dirname, 'commands')).filter(file => file.endsWith('.js'));
@@ -34,6 +46,8 @@ for (const file of commandFiles) {
 client.once('ready', () => {
 	log.info('Client#Ready -> ready...');
 	ownerInit();
+	cacheInit();
+
 });
 
 client.on('message', async (message) => {
@@ -49,13 +63,22 @@ client.on('message', async (message) => {
 	try {
 		await client.commands.get(command).execute(message, args);
 	} catch (error) {
+		//Here we catch any command-breaking errors. These need to be processed &
+		// shipped off to 4 separate places.
+		// 1) Console error logging
+		// 2) User chat logging
+		// 2) Database statistic Logging
+		// 3) Owner DM Logging
+
 		log.error(`Client#commandExecutionError -> ${error}`);
-		await message.reply('There was an error trying to execute the command. If you\'re seeing this, it means the error was not caught within the command.');
-		await owner.send(`An uncaught error was encountered. |Guild: \'${message.guild.name}\'<${message.guild.id}>|Message: \'${message.id}\'|Console Error: \`Client#commandExecutionError -> ${error}\``);
+		//this needs to go away: migrate to ErrorMessage:
+		const errorMessage = new ErrorMessage(error);
+
+		await ownerObject.send(`An uncaught error was encountered. |Guild: \'${message.guild.name}\'<${message.guild.id}>|Message: \'${message.id}\'\nConsole Error: \`Client#commandExecutionError -> ${error}\``);
 	}
 });
 
-client.on('guildCreate', async (guild) =>{
+client.on('guildCreate', async (guild) => {
 	//if guild doc doesn't exist
 	const testDocument = guild.id;
 	if(await mongoUtil.doesDocument() == false){

@@ -1,28 +1,49 @@
 import log from '../log'
-import fs from 'fs'
+import fs from 'fs.promises'
 import cliProgress from 'cli-progress'
 import * as util from 'util'
-import NodeCache from "node-cache";
+import NodeCache from "node-cache"
+import {Error} from '../commands/utils/ErrorMessage.js'
 const modsCache = new NodeCache({stdTTL:60*60*1, deleteOnExpire:false});
 const packsCache = new NodeCache({stdTTL:60*60*1, deleteOnExpire:false});
+//This should be a config option.
+const modsCacheFile = (__dirname+'/mods.cache');
+const packsCacheFile = (__dirname+'/packs.cache');
 import MPI from '../utils/ModPackIndexAPI.js'
 const modpackIndexAPI = new MPI;
+const multibar = new cliProgress.MultiBar({
+    clearOnComplete: true,
+    hideCursor: true
 
-  //letter from the editor:
-  //Bars don't work properly, could be fixed, not important at the moment though.
+}, cliProgress.Presets.shades_grey);
 
+/*
+  Need to clean up this code. A large amount is written twice for no reason.
+  Only reason i'm not doing it now is because I don't want to think about how
+  to dynamicaly change from MPI.getmods to .getpacks in a generic function.
+  -Stark 11/22/20
+
+  That was stupid easy. Idiot. Code is still a bit tall, but better than it was.
+  API Calls refactored.
+  -Stark 1/7/21
+*/
+
+//temp. future stark, write actual code for determining startup state
+// Move initialization to seperate funtion, for index.js to call on startup. because
+// it's a startupt function. duh.
+let cacheCycle = 0;
 export default class Utils {
 
   /**
    * async cacheArrayifier - Places each key in a cache object into a singular array
    *
    * @param  {type} cache cache to be arrayified
-   * @return {Array}          an Array where each entry is a keyValue from the cache.
+   * @return {Array}      an Array where each index is a mod-object
    */
   async cacheArrayifier(cache){
       let cacheArray = new Array();
-      const cacheKeys = cache.keys();
-      for(let i = 1; (i-1) < cacheKeys.length; i++){
+      const cacheKeys = cache.getStats().keys;
+      for(let i = 1; (i-1) < cacheKeys; i++){
         let pageNumber = i;
         let nextObject = await cache.get(pageNumber);
         cacheArray = cacheArray.concat(Array.from(nextObject.data));
@@ -31,60 +52,139 @@ export default class Utils {
       return cacheArray;
    }
 
-  /**
-   * async modsCache - Returns a singular *cached* array of all the objects from an MPI API request
-   *
-   * @param  {num} pageSize number of objects to be returned on a page (Max 100, per API restrictoins)
-   * @return {NodeCache}    a NodeCache object which contains each individual page object from the MPI API
-   */
-  async getModsCache(pageSize){
-    //If cache is expired - generate new cache.
-    if((modsCache.getStats().keys == 0)){
-      log.info('MPBotUtils#getModsCache -> Quering API for new cache');
-      let lastPage = await modpackIndexAPI.getMods(pageSize, 1);
-      lastPage = lastPage.meta.last_page;
-      log.info('MPBotUtils#getModsCache -> Last API Request Page: ', lastPage);
-      //add each individual page response to cache
-      const bar1 = new cliProgress.SingleBar({
-        format: 'Mod Cacheing Progress |' + ('{bar}') + '| {percentage}% || {value}/{total} Mods || Eta: {eta}s',
-        barCompleteChar: '\u2588',
-      });
-      bar1.start(lastPage, 0);
-      for(let pageNumber = 1; pageNumber <= lastPage; pageNumber++){
-        let modsObject = await modpackIndexAPI.getMods(pageSize, pageNumber);
-        modsCache.set(pageNumber, modsObject);
-        bar1.increment();
 
-      }
-      bar1.stop();
-      //Info Logging - If the cache is not expected size, log error
-      if (modsCache.getStats().keys != lastPage){
-        log.error('MPBotUtils#getModsCache -> API Caching Failed.');
-      }
-    }
-    return modsCache;
+   /**
+    * async getCache - Returns the active nodecache of the relative type
+    *
+    * @param  {type} cacheType 'pack' or 'mod'
+    * @return {type}           description
+    */
+   async getCache(cacheType){
+     //set cache environment
+     let nodeCache;
+     let cacheFile;
+     if((cacheType != 'pack') && (cacheType != 'mod')){throw 'Invalid cache type.'}
+     if(cacheType == 'pack'){
+       nodeCache = packsCache;
+       cacheFile = packsCacheFile;
+     }
+     if(cacheType == 'mod'){
+       nodeCache = modsCache;
+       cacheFile = modsCacheFile;
+     }
+
+     //if given cache is out of keys, query for a new cache
+     if(nodeCache.getStats().keys == 0){
+       const returnCache = getAPICache(cacheType, 100);
+       return returnCache;
+     }
+
+     //Else, if the cache does preexist, return the cache
+     else {
+       return nodeCache;
+     }
+   }
+
+   async initialize(){
+       //returns nodecache
+     const caches = ['mod', 'pack'];
+     caches.forEach(async cacheType => {
+       try{
+         const cacheObject = await importDiskCache(cacheType);
+         //, log stats & ship it out
+         const importedNumber = cacheObject.getStats().keys;
+         log.info(`MPBotUtils#initialize${cacheType}Cache -> Import of existing cache Successful: Imported ${importedNumber} ${cacheType} pages`);
+         return cacheObject;
+       } catch(e) {
+         log.warn(`MPBotUtils#initialize${cacheType}Cache -> Import of existing cache failed | Details: ${e}`);
+       }
+     });
+   }
+}
+
+/***************************************************
+ * The Following are a collection of functions     *
+ * that are core to the functionality of getCache. *
+ * Removed primarily for simplicity, & readability *
+ **************************************************/
+
+/**
+ * importDiskCache - Takes data from an existing disk cache & imports it to the bots memory NodeCache
+ *
+ * @param  {string} cacheFile string type of cache requested
+ * @return {object}           a JSON Parsed object of the cache contents.
+ */
+async function importDiskCache(cacheType){
+  let nodeCache;
+  let cacheFile;
+  if((cacheType != 'pack') && (cacheType != 'mod')){throw 'Invalid cache type.'}
+  if(cacheType == 'pack'){
+    nodeCache = packsCache;
+    cacheFile = packsCacheFile;
+  }
+  if(cacheType == 'mod'){
+    nodeCache = modsCache;
+    cacheFile = modsCacheFile;
+  }
+  const cacheFileRaw = await fs.readFile(cacheFile, 'utf8');
+  //if the cacheFile parses, we'll use it- if not, error
+  const cacheFileJson = JSON.parse(cacheFileRaw);
+  if(cacheFileJson == {}){throw 'Cache File Empty';}
+  //else statements here should also throw if it's < than a reasonable amount of pages.
+
+
+  //cache file didn't error out, ship it & cli- I mean return the parsed data.
+  const cacheObject = JSON.parse(cacheFileRaw);
+
+  cacheObject.forEach((pageObject, i) => {
+    const pageNumber = i+1;
+    nodeCache.set(pageNumber, pageObject);
+  });
+  const importedNumber = cacheObject.length;
+  return nodeCache;
+}
+
+
+/**
+ * getAPICache - Returns the populated nodecache of a specified type
+ *
+ * @param  {string} type 'mod'or 'pack'
+ * @return {nodeCache}      the relevant nodecache
+ */
+async function getAPICache(type, pageSize){
+  let apiFunction;
+  let physicalCacheDir;
+  let nodeCache;
+  if(type!='mod' && type!='pack'){throw 'Invalid cache type.'}
+  if(type == 'mod'){
+    apiFunction = (pageSize, page)=>{return modpackIndexAPI.getMods(pageSize, page)};
+    physicalCacheDir = modsCacheFile;
+    nodeCache = modsCache;
+  }
+  if(type == 'pack'){
+    apiFunction = (pageSize, page)=>{return modpackIndexAPI.getPacks(pageSize, page)};
+    physicalCacheDir = packsCacheFile;
+    nodeCache = packsCache;
   }
 
-  async getPacksCache(pageSize){
-    try{
-        if(packsCache.getStats().keys == 0){
-        let lastPage = await modpackIndexAPI.getPacks(pageSize, 1);
-        lastPage = lastPage.meta.last_page;
-        const bar2 = new cliProgress.SingleBar({
-          format: 'Modpack Cacheing Progress |' + ('{bar}') + '| {percentage}% || {value}/{total} Modpacks || Eta: {eta}s',
-          barCompleteChar: '\u2588',
-        });
-        bar2.start(lastPage, 0);
-        for (let pageNumber = 1; pageNumber <= lastPage; pageNumber++){
-          let packsObject = await modpackIndexAPI.getPacks(pageSize, pageNumber);
-          packsCache.set(pageNumber, packsObject);
-          bar2.increment();
-        }
-        bar2.stop();
-      }
-    } catch(e) {
-      log.error(`WhateverThe Fuck ThE Error Is-> ${e}`);
-    }
-    return packsCache;
+  log.info(`MPBotUtils#get${type}ModsCache -> Querying API for new cache`);
+  let lastPage = await apiFunction(pageSize, 1);
+  lastPage = lastPage.meta.last_page;
+  log.info(`MPBotUtils#get${type}Cache -> Last API Request Page: `, lastPage);
+  const progressBar = multibar.create(lastPage, 0);
+
+  //for every page, add it to the memory cache & to the fileCache array
+  const fileCacheArray = new Array;
+  for(let pageNumber = 1; pageNumber <= lastPage; pageNumber++){
+    let pageObject = await apiFunction(pageSize, pageNumber);
+    nodeCache.set(pageNumber, pageObject);
+    fileCacheArray[pageNumber-1] = pageObject;
+    progressBar.increment();
   }
+  //write to disk cache
+  const fileCacheString = JSON.stringify(fileCacheArray);
+  fs.writeFile(physicalCacheDir, fileCacheString);
+  multibar.remove(progressBar);
+
+  return nodeCache;
 }

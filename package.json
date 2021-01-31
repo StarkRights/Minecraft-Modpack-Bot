@@ -6,6 +6,7 @@
   "scripts": {
     "build": "babel src -d build",
     "run": "node build/index.js",
+    "demon": "nodemon --ignore ./build --exec npm start",
     "start": "babel src -d build && npm run run",
     "clean": "rm -rf `find build -mindepth 1 | grep -v 'getkeep$'`",
     "test": "npm run clean && npm run build && mocha build/tests/*.js"
@@ -20,10 +21,12 @@
     "cli-progress": "^3.8.2",
     "dblapi.js": "^2.4.1",
     "discord.js": "^12.3.1",
+    "fs.promises": "^0.1.2",
     "fuse.js": "^6.4.1",
     "mongodb": "^3.6.2",
     "node-cache": "^5.1.2",
     "node-fetch": "^2.6.1",
+    "nodemon": "^2.0.7",
     "winston": "^3.3.3"
   },
   "author": "Starkrights",
