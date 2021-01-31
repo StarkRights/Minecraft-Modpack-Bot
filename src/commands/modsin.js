@@ -30,12 +30,12 @@ module.exports = {
 
     //sort the set of mods alphabetically
     const searcher = new Search();
-    const sortedResult = searcher.sortAlphabetically(modsObject.data)
+    const sortedResult = searcher.sortAlphabetically(modsObject.data);
 
-    const pack = await modpackIndexAPI.getModpack(args[0]);
+    const pack = await modpackIndexAPI.getPack(args[0]);
     const packTitle = pack.data.name;
 
     //ship data off to be packaged, paginated & displayed to the user.
-    searchMessage.sendSearchResults(sortedResult, `Mods in \'${packTitle}\'`)
+    searchMessage.sendSearchResults(sortedResult, `Mods in \'${packTitle}\'`);
   }
 }
