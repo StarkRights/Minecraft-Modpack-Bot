@@ -62,6 +62,7 @@ export default class InfoMessage {
     const infoEmbed = new MessageEmbed()
       .setColor('#0099ff')
       .setTitle(`${title}`)
+      .setImages(infoObject.thumbnail)
       .setTimestamp()
       .addField(`Description:`, infoObject.summary)
       .addField(`Authors:`, authors, true)
