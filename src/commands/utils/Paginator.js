@@ -16,7 +16,7 @@ export default class Paginator{
       //if we're about to OOB Exception, kill it.
       const modNumber = (i)+(10*(pageNumber));
       if(modNumber == this.dataArray.length){
-        break;
+        return paginatedEmbed;
       }
 
       //otherwise, paginate.
