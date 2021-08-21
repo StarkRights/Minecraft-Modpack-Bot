@@ -33,7 +33,7 @@ export default class InfoMessage {
     } catch(e){
       const errorObject = new Error()
         .setType(`Results Presentation`)
-        .setMessage(commandMessage)
+        .setMessage(this.commandMessage)
         .setError(e)
         .setDetails(config.errorMessages.cantEmbed);
       throw errorObject;
@@ -62,7 +62,7 @@ export default class InfoMessage {
     const infoEmbed = new MessageEmbed()
       .setColor('#0099ff')
       .setTitle(`${title}`)
-      .setImages(infoObject.thumbnail)
+      .setThumbnail(infoObject.thumbnail_url)
       .setTimestamp()
       .addField(`Description:`, infoObject.summary)
       .addField(`Authors:`, authors, true)
