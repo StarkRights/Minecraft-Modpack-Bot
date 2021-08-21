@@ -1,7 +1,7 @@
 import log from '../../log'
 import {MessageEmbed} from 'discord.js'
 import Paginator from '../utils/Paginator.js'
-import ErrorMessage from './ErrorMessage.js'
+import {ErrorMessage} from './ErrorMessage.js'
 
 
 

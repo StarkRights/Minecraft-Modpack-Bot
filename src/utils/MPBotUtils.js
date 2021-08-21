@@ -1,5 +1,8 @@
 import log from '../log'
 import fs from 'fs.promises'
+import { fileURLToPath } from 'url';
+import {join, dirname} from 'path'
+const __dirname = dirname(fileURLToPath(import.meta.url));
 import cliProgress from 'cli-progress'
 import * as util from 'util'
 import NodeCache from "node-cache"

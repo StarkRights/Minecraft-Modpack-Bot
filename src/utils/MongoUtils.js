@@ -2,7 +2,9 @@ import config from '../config.js'
 import log from '../log.js'
 import assert from 'assert'
 
-import {MongoClient} from 'mongodb'
+
+import mongopkg from 'mongodb'
+const {MongoClient} = mongopkg
 const dbURL = config.mongo.dbURL;
 const dbName = config.mongo.dbName;
 

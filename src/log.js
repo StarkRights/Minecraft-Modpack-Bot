@@ -1,5 +1,6 @@
 // github.com/headline/discord-compiler-bot
-import { createLogger, format, transports } from 'winston';
+import winston from 'winston';
+const {createLogger, format, transports} = winston;
 const { label, combine, timestamp, printf, colorize } = format;
 
 const log = createLogger({

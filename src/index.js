@@ -1,9 +1,10 @@
-import "regenerator-runtime/runtime.js";
-import {readdirSync, readFile} from 'fs'
+import fs from 'fs'
+import { fileURLToPath } from 'url';
+import {join, dirname} from 'path'
+const __dirname = dirname(fileURLToPath(import.meta.url));
 import {Client, Collection, User} from 'discord.js'
 import config from './config.js'
 import log from './log'
-import {join} from 'path'
 import MongoUtil from './utils/MongoUtils'
 import Utils from './utils/MPBotUtils'
 import {ErrorMessage} from './commands/utils/ErrorMessage.js'
@@ -37,10 +38,12 @@ async function cacheInit(){
 	catch(e){ log.error(`CacheInit#initializeFailure -> ${e}`); }
 }
 
-const commandFiles = readdirSync(join(__dirname, 'commands')).filter(file => file.endsWith('.js'));
+const commandFiles = fs.readdirSync(join(__dirname, 'commands')).filter(file => file.endsWith('.js'));
 for (const file of commandFiles) {
-	const command = require(`./commands/${file}`);
-	client.commands.set(command.name, command);
+	(async () => {
+		const command = await import(`./commands/${file}`);
+		client.commands.set(command.name, command);
+	})();
 }
 
 client.once('ready', () => {

@@ -1,22 +1,16 @@
 {
   "name": "modpackindex-bot",
   "version": "1.0.0",
+  "type": "module",
   "description": "Discord bot for browsing modpack info",
   "main": "index.js",
   "scripts": {
-    "build": "babel src -d build",
     "run": "node build/index.js",
     "demon": "nodemon --ignore ./build --exec npm start",
-    "start": "babel src -d build && npm run run",
-    "clean": "rm -rf `find build -mindepth 1 | grep -v 'getkeep$'`",
-    "test": "npm run clean && npm run build && mocha build/tests/*.js"
+    "start": "node --experimental-specifier-resolution=node --experimental-modules --experimental-json-modules --trace-warnings src/index.js ",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
-    "@babel/cli": "^7.14.8",
-    "@babel/plugin-transform-runtime": "^7.11.5",
-    "@babel/preset-env": "^7.11.5",
-    "@babel/register": "^7.11.5",
-    "@babel/runtime": "^7.11.2",
     "bufferutil": "^4.0.1",
     "cli-progress": "^3.8.2",
     "dblapi.js": "^2.4.1",
@@ -32,8 +26,7 @@
   "author": "Starkrights",
   "license": "ISC",
   "devDependencies": {
-	"eslint": "^7.32.0",
+    "eslint": "^7.32.0",
     "eslint-plugin-import": "^2.24.1"
-    "@babel/core": "^7.11.6"
   }
 }
