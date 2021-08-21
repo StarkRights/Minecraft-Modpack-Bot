@@ -1,5 +1,5 @@
 import log from '../../log'
-import {ErrorMessage} from './ErrorMessage.js'
+import {ErrorMessage, Error} from './ErrorMessage.js'
 import {ReactionCollector, MessageEmbed} from 'discord.js'
 
 
