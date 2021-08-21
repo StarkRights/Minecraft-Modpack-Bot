@@ -66,9 +66,12 @@ export default class Paginator{
         throw error;
       }
       //Increment menupage based on reaction, disallow negative pages
-      if(isNextPage){menuPage = menuPage + 1};
-      if(isPrevPage){menuPage = menuPage - 1};
-      if(menuPage < 0){menuPage = 0};
+      // Need comparison logic: currently allowed to request pages that don't exist
+      const isLast = ( (menuPage+1)*10 > this.dataArray.length )
+      if(isNextPage && !isLast){menuPage = menuPage + 1}
+      if(isPrevPage){menuPage = menuPage - 1}
+      if(menuPage < 0){menuPage = 0}
+
 
       //delete all old fields
       embed.spliceFields(0, maxFields);
