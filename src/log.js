@@ -2,6 +2,11 @@
 import winston from 'winston';
 const {createLogger, format, transports} = winston;
 const { label, combine, timestamp, printf, colorize } = format;
+import { fileURLToPath } from 'url';
+import {join, dirname} from 'path'
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const date = new Date();
+const initializationDateString = `${__dirname}/../logs/${date.getMonth()}-${date.getDate()}-${date.getFullYear()}_${date.getHours()}-${date.getMinutes()}-${date.getSeconds()} `;
 
 const log = createLogger({
     level: 'info',
@@ -29,7 +34,11 @@ const log = createLogger({
         error: 0,
     },
     transports: [
-        new transports.Console()
+        new transports.Console({level:`info`}),
+        new transports.File({
+          filename: `${initializationDateString}.log`,
+          level: `debug`
+        })
     ]
 });
 

@@ -3,5 +3,6 @@ build/
 dist/
 src/config.js
 src/nodeserver.bat
+logs/
 .env
 *.cache
