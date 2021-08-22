@@ -19,7 +19,7 @@ async function execute (message, args){
 
 
   const packID = args[0];
-  let packsObject = await modpackIndexAPI.getModModpacks(packID);
+  let packsObject = await modpackIndexAPI.getModpacksWithMod(packID);
   const packsArray = packsObject.data;
 
   //sort the set of mods alphabetically
